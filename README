@@ -1,0 +1,49 @@
+kikuyu
+======
+
+Kikuyu is the composition and delivery application for functional components (i.e. components that define all their
+layers with the component, might be called vertical components after vertical slice.). These are distinct from components
+that only cover a single layer of architecture - horizontal components, may be service components as parts of a
+"wedding cake" architecture.
+
+Installation:
+#############
+
+Install Play Framework on you machine:
+http://www.playframework.com/
+
+Install sbt on your machine:
+http://www.scala-sbt.org/
+
+You might need to set your proxy in your system environment variables:
+
+http_proxy=http://cache2.practicallaw.com:8080
+
+however this will mean any WS request to the localhost address will also attempt to go via the proxy and therefore fail.
+i tried this:
+
+no_proxy=localhost,127.0.0.1
+
+it didn't work!
+I had to remove the http_proxy env var to get it to work.
+
+Now, whenever I run a play or sbt command that needs to resolve dependencies, such as 'clean', i run
+
+set http_proxy=http://cache2.practicallaw.com:8080
+
+in the console window and then run the play or sbt command in the same window. This setting therefore doesn't persist
+between command windows.
+
+You can probably get something better going using JVM proxy arguments (e.g. -Dhttp_proxy ?)
+
+IntelliJ Dependencies
+#####################
+
+If you add or change dependencies in your Build.scala IntelliJ probably won't pick them up.
+
+You should go to a command window in your project directory and run:
+
+play "idea with-sources=yes"
+
+which will update your IntelliJ project.
+This file was modified by IntelliJ IDEA 12.1.1 for binding GitHub repository
