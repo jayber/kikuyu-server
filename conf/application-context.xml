@@ -5,7 +5,8 @@
 
     <bean id="kikuyuController" class="controllers.KikuyuController">
         <property name="kikuyuLayoutWebserviceAddress" value="http://localhost:8080/kikuyu/ws/"/>
-        <!--<property name=""-->
+        <property name="wsWrapper">
+            <bean class="controllers.ws.WSWrapperImpl"/>
+        </property>
     </bean>
-    <bean class="controllers.ws.WSWrapperImpl"/>
 </beans>
