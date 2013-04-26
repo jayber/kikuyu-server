@@ -4,7 +4,7 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
     <bean id="kikuyuController" class="controllers.KikuyuController">
-        <property name="kikuyuLayoutWebserviceAddress" value="http://localhost:8080/kikuyu/ws/"/>
+        <property name="kikuyuLayoutWebserviceAddress" value="http://localhost:8080/kikuyu/ws"/>
         <property name="wsWrapper">
             <bean class="controllers.ws.WSWrapperImpl"/>
         </property>

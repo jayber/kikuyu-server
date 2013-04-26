@@ -14,11 +14,11 @@ import play.libs.F;
 import play.libs.WS;
 import play.mvc.Result;
 import play.mvc.Results;
+import util.UrlMatcherImpl;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(KikuyuController.class)
@@ -26,26 +26,11 @@ public class KikuyuControllerTest {
 
     private static final String TEST_ADDRESS = "testAddress";
     private static final String TEST_PATH = "testPath";
+    private static final String DESTINATION_PAGE_URL = "destination page URL";
     private static final String DESTINATION_PAGE_HTML = "destination page html";
 
     @Mock
     private WSWrapper wrapper;
-    @Mock
-    private WS.WSRequestHolder requestHolder;
-    @Mock
-    private F.Promise responsePromise;
-    @Mock
-    private Results.AsyncResult mockResult;
-    @Mock
-    private F.Function<WS.Response, Result> responseResultFunction;
-    @Mock
-    private WS.Response response;
-    @Mock
-    private F.Promise<Result> resultPromise;
-    @Mock
-    private Results.Status status;
-    @Mock
-    private JsonNode urlMappingsResult;
 
     private KikuyuController kikuyuController = new KikuyuController();
 
@@ -54,37 +39,77 @@ public class KikuyuControllerTest {
         MockitoAnnotations.initMocks(this);
         kikuyuController.setKikuyuLayoutWebserviceAddress(TEST_ADDRESS);
         kikuyuController.setWsWrapper(wrapper);
-
-        when(wrapper.url(anyString())).thenReturn(requestHolder);
-        when(requestHolder.get()).thenReturn(responsePromise);
     }
 
     @Test
     public void testSiphon() throws Exception {
+        final WS.WSRequestHolder requestHolder = mock(WS.WSRequestHolder.class);
+        final F.Promise<WS.Response> responsePromise = mock(F.Promise.class);
+        final Results.AsyncResult mockResult = mock(Results.AsyncResult.class);
+        final KikuyuController.OutputPageResponseToClientFunction outputFunction =
+                mock(KikuyuController.OutputPageResponseToClientFunction.class);
+        final KikuyuController.UrlMappingsToPageRequestPromiseFunction urlToPageRequestFunction =
+                mock(KikuyuController.UrlMappingsToPageRequestPromiseFunction.class);
+
+
+        when(wrapper.url(anyString())).thenReturn(requestHolder);
+        when(requestHolder.get()).thenReturn(responsePromise);
+        PowerMockito.whenNew(KikuyuController.OutputPageResponseToClientFunction.class).withNoArguments().thenReturn(outputFunction);
+        PowerMockito.whenNew(KikuyuController.UrlMappingsToPageRequestPromiseFunction.class).withArguments(outputFunction, wrapper, TEST_PATH).thenReturn(urlToPageRequestFunction);
         PowerMockito.stub(PowerMockito.method(Results.class, "async")).toReturn(mockResult);
 
         Result result = kikuyuController.siphon(TEST_PATH);
+
         verify(wrapper).url(TEST_ADDRESS + "/urlMappings");
         verify(requestHolder).get();
+        PowerMockito.verifyNew(KikuyuController.OutputPageResponseToClientFunction.class).withNoArguments();
     }
 
     @Test
     public void testUrlMappingsToPageRequestPromiseFunction() throws Throwable {
-        final KikuyuController.UrlMappingsToPageRequestPromiseFunction urlMappingsToPageRequestPromiseFunction = new KikuyuController.UrlMappingsToPageRequestPromiseFunction(
-                TEST_ADDRESS, responseResultFunction, wrapper);
-        when(responsePromise.map(responseResultFunction)).thenReturn(resultPromise);
-        when(response.getBody()).thenReturn(DESTINATION_PAGE_HTML);
+        final WS.Response urlMappingsResponse = mock(WS.Response.class);
+        final JsonNode urlMappings = mock(JsonNode.class);
+        final UrlMatcherImpl matcher = mock(UrlMatcherImpl.class);
+        final WS.WSRequestHolder destinationPageRequestHolder = mock(WS.WSRequestHolder.class);
+        final F.Promise<WS.Response> destinationPageResponsePromise = mock(F.Promise.class);
+        final F.Function<WS.Response, Result> destinationPageOutputFunction = mock(F.Function.class);
+        final F.Promise<Result> outputToClientPromise = mock(F.Promise.class);
 
-        final F.Promise<Result> actualResultPromise = urlMappingsToPageRequestPromiseFunction.apply(response);
-        assertEquals(resultPromise, actualResultPromise);
-        verify(wrapper).url(DESTINATION_PAGE_HTML);
-        verify(requestHolder).get();
+        when(urlMappingsResponse.asJson()).thenReturn(urlMappings);
+        PowerMockito.whenNew(UrlMatcherImpl.class).withAnyArguments().thenReturn(matcher);
+        when(matcher.match(TEST_PATH)).thenReturn(DESTINATION_PAGE_URL);
+        when(wrapper.url(DESTINATION_PAGE_URL)).thenReturn(destinationPageRequestHolder);
+        when(destinationPageRequestHolder.get()).thenReturn(destinationPageResponsePromise);
+        when(destinationPageResponsePromise.map(destinationPageOutputFunction)).thenReturn(outputToClientPromise);
+
+        final KikuyuController.UrlMappingsToPageRequestPromiseFunction urlMappingsToPageRequestPromiseFunction =
+                new KikuyuController.UrlMappingsToPageRequestPromiseFunction(destinationPageOutputFunction, wrapper, TEST_PATH);
+
+        final F.Promise<Result> actualOutputToClientPromise = urlMappingsToPageRequestPromiseFunction.apply(urlMappingsResponse);
+        assertEquals(outputToClientPromise, actualOutputToClientPromise);
+
+        verify(urlMappingsResponse).asJson();
+        verify(matcher).match(TEST_PATH);
+        verify(wrapper).url(DESTINATION_PAGE_URL);
+        verify(destinationPageRequestHolder).get();
+        verify(destinationPageResponsePromise).map(destinationPageOutputFunction);
     }
 
     @Test
-    public void testResponseResultFunction() throws Throwable {
+    public void testOutputPageResponseToClientFunction() throws Throwable {
+        final WS.Response destinationPageResponse = mock(WS.Response.class);
+        final Results.Status okStatus = mock(Results.Status.class);
+        final Results.Status htmlStatus = mock(Results.Status.class);
+
+        when(destinationPageResponse.getBody()).thenReturn(DESTINATION_PAGE_HTML);
+        PowerMockito.stub(PowerMockito.method(Results.class, "ok", String.class)).toReturn(okStatus);
+        when(okStatus.as("text/html")).thenReturn(htmlStatus);
+
         final KikuyuController.OutputPageResponseToClientFunction outputPageWSResponse = new KikuyuController.OutputPageResponseToClientFunction();
-        PowerMockito.stub(PowerMockito.method(Results.class, "ok", String.class)).toReturn(status);
-        final Result result = outputPageWSResponse.apply(response);
+        final Result actualResult = outputPageWSResponse.apply(destinationPageResponse);
+
+        assertEquals(htmlStatus, actualResult);
+        verify(destinationPageResponse).getBody();
+        verify(okStatus).as("text/html");
     }
 }
