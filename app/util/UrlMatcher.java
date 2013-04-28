@@ -1,5 +1,7 @@
 package util;
 
+import domain.Page;
+
 public interface UrlMatcher {
-    String match(String path);
+    Page match(String path);
 }

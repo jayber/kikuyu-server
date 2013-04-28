@@ -21,10 +21,13 @@ public class KikuyuController extends Controller {
         return ok("this is it");
     }
 
+    //todo: record each request that is mapped to a url and show in urlmappings number of requests in last month, so can delete mappings that aren't being used
+    //todo: move the retrieval of urlMappings into  a periodic task, rather than part of individual requests
+    //todo: copy headers (e.g. cookies) from original request into sub requests and then from responses
     public Result siphon(String path) {
         final String wsRequestPath = kikuyuLayoutWebserviceAddress + URL_MAPPINGS;
-        final WS.WSRequestHolder retrieveAllUrlMappingsHolder = wsWrapper.url(wsRequestPath);
-        final F.Promise<WS.Response> allUrlMappingsResponsePromise = retrieveAllUrlMappingsHolder.get();
+        final WS.WSRequestHolder retrieveAllUrlMappingsRequestHolder = wsWrapper.url(wsRequestPath);
+        final F.Promise<WS.Response> allUrlMappingsResponsePromise = retrieveAllUrlMappingsRequestHolder.get();
 
         final F.Function<WS.Response, F.Promise<Result>> processLayoutWSResponse = chainFunctionsToProcessWSResponses(path);
 
@@ -43,7 +46,12 @@ public class KikuyuController extends Controller {
         public Result apply(WS.Response response) throws Throwable {
             Logger.info("destination content from: " + response.getUri());
             final String contentType = response.getHeader("Content-Type");
-            final Status status = status(response.getStatus(), response.getBodyAsStream()).as(contentType);
+            Status status = null;
+            if (contentType.startsWith("text")) {
+                status = ok(response.getBody()).as(contentType);
+            } else {
+                status = status(response.getStatus(), response.getBodyAsStream()).as(contentType);
+            }
             return status;
         }
     }
@@ -64,7 +72,7 @@ public class KikuyuController extends Controller {
             final JsonNode body = response.asJson();
 
             final UrlMatcher urlMatcher = new UrlMatcherImpl(body);
-            final String destinationUrl = urlMatcher.match(path);
+            final String destinationUrl = urlMatcher.match(path).getTemplateUrl();
 
             final WS.WSRequestHolder url = wsWrapper.url(destinationUrl);
             final F.Promise<WS.Response> responsePromise = url.get();

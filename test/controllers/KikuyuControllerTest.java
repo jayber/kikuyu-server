@@ -1,6 +1,7 @@
 package controllers;
 
 import controllers.ws.WSWrapper;
+import domain.Page;
 import org.codehaus.jackson.JsonNode;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,6 +16,9 @@ import play.libs.WS;
 import play.mvc.Result;
 import play.mvc.Results;
 import util.UrlMatcherImpl;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
@@ -63,6 +67,7 @@ public class KikuyuControllerTest {
         verify(wrapper).url(TEST_ADDRESS + "/urlMappings");
         verify(requestHolder).get();
         PowerMockito.verifyNew(KikuyuController.OutputPageResponseToClientFunction.class).withNoArguments();
+        PowerMockito.verifyNew(KikuyuController.UrlMappingsToPageRequestPromiseFunction.class).withArguments(outputFunction, wrapper, TEST_PATH);
     }
 
     @Test
@@ -77,7 +82,7 @@ public class KikuyuControllerTest {
 
         when(urlMappingsResponse.asJson()).thenReturn(urlMappings);
         PowerMockito.whenNew(UrlMatcherImpl.class).withAnyArguments().thenReturn(matcher);
-        when(matcher.match(TEST_PATH)).thenReturn(DESTINATION_PAGE_URL);
+        when(matcher.match(TEST_PATH)).thenReturn(new Page(DESTINATION_PAGE_URL, ""));
         when(wrapper.url(DESTINATION_PAGE_URL)).thenReturn(destinationPageRequestHolder);
         when(destinationPageRequestHolder.get()).thenReturn(destinationPageResponsePromise);
         when(destinationPageResponsePromise.map(destinationPageOutputFunction)).thenReturn(outputToClientPromise);
@@ -96,12 +101,14 @@ public class KikuyuControllerTest {
     }
 
     @Test
-    public void testOutputPageResponseToClientFunction() throws Throwable {
+    public void testOutputPageResponseAsTextToClientFunction() throws Throwable {
         final WS.Response destinationPageResponse = mock(WS.Response.class);
         final Results.Status okStatus = mock(Results.Status.class);
         final Results.Status htmlStatus = mock(Results.Status.class);
 
+        when(destinationPageResponse.getHeader("Content-Type")).thenReturn("text/html");
         when(destinationPageResponse.getBody()).thenReturn(DESTINATION_PAGE_HTML);
+
         PowerMockito.stub(PowerMockito.method(Results.class, "ok", String.class)).toReturn(okStatus);
         when(okStatus.as("text/html")).thenReturn(htmlStatus);
 
@@ -109,7 +116,35 @@ public class KikuyuControllerTest {
         final Result actualResult = outputPageWSResponse.apply(destinationPageResponse);
 
         assertEquals(htmlStatus, actualResult);
+        verify(destinationPageResponse).getHeader("Content-Type");
         verify(destinationPageResponse).getBody();
         verify(okStatus).as("text/html");
+    }
+
+    @Test
+    public void testOutputPageResponseNOTAsTextToClientFunction() throws Throwable {
+        final WS.Response destinationPageResponse = mock(WS.Response.class);
+        final Results.Status okStatus = mock(Results.Status.class);
+        final Results.Status httpStatus = mock(Results.Status.class);
+
+        when(destinationPageResponse.getHeader("Content-Type")).thenReturn("binary");
+        when(destinationPageResponse.getStatus()).thenReturn(200);
+        when(destinationPageResponse.getBodyAsStream()).thenReturn(new InputStream() {
+            @Override
+            public int read() throws IOException {
+                return 0;
+            }
+        });
+        PowerMockito.stub(PowerMockito.method(Results.class, "status", int.class, InputStream.class)).toReturn(okStatus);
+        when(okStatus.as("binary")).thenReturn(httpStatus);
+
+        final KikuyuController.OutputPageResponseToClientFunction outputPageWSResponse = new KikuyuController.OutputPageResponseToClientFunction();
+        final Result actualResult = outputPageWSResponse.apply(destinationPageResponse);
+
+        assertEquals(httpStatus, actualResult);
+        verify(destinationPageResponse).getHeader("Content-Type");
+        verify(destinationPageResponse).getStatus();
+        verify(destinationPageResponse).getBodyAsStream();
+        verify(okStatus).as("binary");
     }
 }
