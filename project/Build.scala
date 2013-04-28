@@ -13,6 +13,7 @@ object ApplicationBuild extends Build {
     javaJdbc,
     javaEbean,
     "org.springframework" % "spring-context" % "3.2.2.RELEASE",
+    "org.springframework" % "spring-web" % "3.2.2.RELEASE",
     "org.springframework" % "spring-test" % "3.2.2.RELEASE",
     "org.mockito" % "mockito-core" % "1.9.5",
     "org.powermock" % "powermock-module-junit4" % "1.5",

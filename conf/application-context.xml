@@ -3,10 +3,19 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="kikuyuController" class="controllers.KikuyuController">
+    <bean id="urlMappingsRetriever" class="util.UrlMappingsRetriever">
         <property name="kikuyuLayoutWebserviceAddress" value="http://localhost:8080/kikuyu/ws"/>
         <property name="wsWrapper">
             <bean class="controllers.ws.WSWrapperImpl"/>
         </property>
+        <property name="reloadUrlMappingsFreqMins" value="1"/>
     </bean>
+
+    <bean id="kikuyuController" class="controllers.KikuyuController">
+        <property name="wsWrapper">
+            <bean class="controllers.ws.WSWrapperImpl"/>
+        </property>
+        <property name="urlMappingsRetriever" ref="urlMappingsRetriever"/>
+    </bean>
+
 </beans>

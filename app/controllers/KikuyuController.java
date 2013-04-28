@@ -1,20 +1,19 @@
 package controllers;
 
 import controllers.ws.WSWrapper;
-import org.codehaus.jackson.JsonNode;
+import domain.Page;
 import play.Logger;
 import play.libs.F;
 import play.libs.WS;
 import play.mvc.Controller;
 import play.mvc.Result;
-import util.UrlMatcher;
-import util.UrlMatcherImpl;
+import util.UrlMappingsRetriever;
+
+import java.util.List;
 
 public class KikuyuController extends Controller {
 
-    private static final String URL_MAPPINGS = "/urlMappings";
-
-    private String kikuyuLayoutWebserviceAddress;
+    private UrlMappingsRetriever urlMappingsRetriever;
     private WSWrapper wsWrapper;
 
     public Result index() {
@@ -22,70 +21,51 @@ public class KikuyuController extends Controller {
     }
 
     //todo: record each request that is mapped to a url and show in urlmappings number of requests in last month, so can delete mappings that aren't being used
-    //todo: move the retrieval of urlMappings into  a periodic task, rather than part of individual requests
     //todo: copy headers (e.g. cookies) from original request into sub requests and then from responses
     public Result siphon(String path) {
-        final String wsRequestPath = kikuyuLayoutWebserviceAddress + URL_MAPPINGS;
-        final WS.WSRequestHolder retrieveAllUrlMappingsRequestHolder = wsWrapper.url(wsRequestPath);
-        final F.Promise<WS.Response> allUrlMappingsResponsePromise = retrieveAllUrlMappingsRequestHolder.get();
 
-        final F.Function<WS.Response, F.Promise<Result>> processLayoutWSResponse = chainFunctionsToProcessWSResponses(path);
+        Page match = urlMappingsRetriever.getUrlMatcher().match(path);
+        final String destinationUrl = match.getTemplateUrl();
+        final WS.WSRequestHolder url = wsWrapper.url(destinationUrl);
+        final F.Promise<WS.Response> templatePromise = url.get();
 
-        final F.Promise<Result> resultPromise = allUrlMappingsResponsePromise.flatMap(processLayoutWSResponse);
+        final String componentUrl = match.getComponentUrl();
+        final WS.WSRequestHolder urlHolder = wsWrapper.url(componentUrl);
+        final F.Promise<WS.Response> componentPromise = urlHolder.get();
+
+        F.Promise<List<WS.Response>> promises = F.Promise.sequence(templatePromise, componentPromise);
+        F.Promise<Result> resultPromise = promises.map(new F.Function<List<WS.Response>, Result>() {
+
+            @Override
+            public Result apply(List<WS.Response> responses) throws Throwable {
+                WS.Response templateResponse = responses.get(0);
+                Logger.info("template content from: " + templateResponse.getUri());
+                WS.Response componentResponse = responses.get(1);
+                Logger.info("component content from: " + componentResponse.getUri());
+                final String contentType = templateResponse.getHeader("Content-Type");
+                Status status;
+                if (contentType.startsWith("text")) {
+                    status = ok(getContent(templateResponse.getBody(), componentResponse.getBody())).as(contentType);
+                } else {
+                    status = status(templateResponse.getStatus(), templateResponse.getBodyAsStream()).as(contentType);
+                }
+                return status;
+            }
+        });
 
         return async(resultPromise);
     }
 
-    private F.Function<WS.Response, F.Promise<Result>> chainFunctionsToProcessWSResponses(String path) {
-        final F.Function<WS.Response, Result> outputPageResponseToClientFunction = new OutputPageResponseToClientFunction();
-        return new UrlMappingsToPageRequestPromiseFunction(outputPageResponseToClientFunction, wsWrapper, path);
-    }
-
-    public static class OutputPageResponseToClientFunction implements F.Function<WS.Response, Result> {
-        @Override
-        public Result apply(WS.Response response) throws Throwable {
-            Logger.info("destination content from: " + response.getUri());
-            final String contentType = response.getHeader("Content-Type");
-            Status status = null;
-            if (contentType.startsWith("text")) {
-                status = ok(response.getBody()).as(contentType);
-            } else {
-                status = status(response.getStatus(), response.getBodyAsStream()).as(contentType);
-            }
-            return status;
-        }
-    }
-
-    public static class UrlMappingsToPageRequestPromiseFunction implements F.Function<WS.Response, F.Promise<Result>> {
-        private final F.Function<WS.Response, Result> outputPageResponseToClientFunction;
-        private WSWrapper wsWrapper;
-        private String path;
-
-        public UrlMappingsToPageRequestPromiseFunction(F.Function<WS.Response, Result> outputPageResponseToClientFunction, WSWrapper wsWrapper, String path) {
-            this.outputPageResponseToClientFunction = outputPageResponseToClientFunction;
-            this.wsWrapper = wsWrapper;
-            this.path = path;
-        }
-
-        @Override
-        public F.Promise<Result> apply(WS.Response response) throws Throwable {
-            final JsonNode body = response.asJson();
-
-            final UrlMatcher urlMatcher = new UrlMatcherImpl(body);
-            final String destinationUrl = urlMatcher.match(path).getTemplateUrl();
-
-            final WS.WSRequestHolder url = wsWrapper.url(destinationUrl);
-            final F.Promise<WS.Response> responsePromise = url.get();
-            final F.Promise<Result> map = responsePromise.map(outputPageResponseToClientFunction);
-            return map;
-        }
-    }
-
-    public void setKikuyuLayoutWebserviceAddress(String kikuyuLayoutWebserviceAddress) {
-        this.kikuyuLayoutWebserviceAddress = kikuyuLayoutWebserviceAddress;
+    private String getContent(String template, String component) {
+        String finalText = template.replaceAll("<div location>.*</div>", component);
+        return finalText;
     }
 
     public void setWsWrapper(WSWrapper wsWrapper) {
         this.wsWrapper = wsWrapper;
+    }
+
+    public void setUrlMappingsRetriever(UrlMappingsRetriever urlMappingsRetriever) {
+        this.urlMappingsRetriever = urlMappingsRetriever;
     }
 }
