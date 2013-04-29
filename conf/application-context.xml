@@ -5,9 +5,6 @@
 
     <bean id="urlMappingsRetriever" class="util.UrlMappingsRetriever">
         <property name="kikuyuLayoutWebserviceAddress" value="http://localhost:8080/kikuyu/ws"/>
-        <property name="wsWrapper">
-            <bean class="controllers.ws.WSWrapperImpl"/>
-        </property>
         <property name="reloadUrlMappingsFreqMins" value="1"/>
     </bean>
 
@@ -16,6 +13,9 @@
             <bean class="controllers.ws.WSWrapperImpl"/>
         </property>
         <property name="urlMappingsRetriever" ref="urlMappingsRetriever"/>
+        <property name="responseComposer">
+            <bean class="util.ResponseComposerImpl"/>
+        </property>
     </bean>
 
 </beans>

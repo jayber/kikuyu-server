@@ -61,13 +61,5 @@ public class UrlMatcherImpl implements UrlMatcher {
             this.destinationUrl = destinationUrl;
             this.componentUrl = componentUrl == null ? "" : componentUrl;
         }
-
-        @Override
-        public String toString() {
-            return "PatternPage{" +
-                    "pattern=" + pattern +
-                    ", destinationUrl='" + destinationUrl + '\'' +
-                    '}';
-        }
     }
 }

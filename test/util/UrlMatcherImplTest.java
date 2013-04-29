@@ -1,11 +1,14 @@
 package util;
 
+import org.apache.commons.collections.iterators.EmptyIterator;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class UrlMatcherImplTest {
 
@@ -61,4 +64,14 @@ public class UrlMatcherImplTest {
     public void testComponentUrlNull() throws Exception {
         assertEquals("", urlMatcher.match(NO_SPECIFIC_MATCH).getComponentUrl());
     }
+
+    @Test
+    public void testNull() throws Exception {
+        JsonNode jsonNode = mock(JsonNode.class);
+        when(jsonNode.iterator()).thenReturn(EmptyIterator.INSTANCE);
+        urlMatcher = new UrlMatcherImpl(jsonNode);
+
+        assertEquals(null, urlMatcher.match(NO_SPECIFIC_MATCH));
+    }
+
 }
