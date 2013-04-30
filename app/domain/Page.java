@@ -1,19 +1,15 @@
 package domain;
 
+import java.util.List;
+
 public class Page {
-    private String templateUrl;
-    private String componentUrl;
+    private List<String> componentUrls;
 
-    public Page(String realTemplateUrl, String realComponentUrl) {
-        templateUrl = realTemplateUrl;
-        componentUrl = realComponentUrl;
+    public Page(List componentUrls) {
+        this.componentUrls = componentUrls;
     }
 
-    public String getTemplateUrl() {
-        return templateUrl;
-    }
-
-    public String getComponentUrl() {
-        return componentUrl;
+    public List<String> getComponentUrls() {
+        return componentUrls;
     }
 }

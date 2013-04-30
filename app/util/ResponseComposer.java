@@ -1,5 +1,5 @@
 package util;
 
 public interface ResponseComposer {
-    String composeBody(String templateBody, String componentBody);
+    String composeBody(String... body);
 }

@@ -14,16 +14,13 @@ import play.libs.F;
 import play.libs.WS;
 import play.mvc.Result;
 import play.mvc.Results;
+import util.ComposeClientResponseFunction;
 import util.ResponseComposer;
 import util.UrlMappingsRetriever;
 import util.UrlMatcher;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -32,16 +29,16 @@ import static org.mockito.Mockito.*;
 public class KikuyuControllerTest {
 
     private static final String TEST_PATH = "testPath";
-    private static final String TEMPLATE_PAGE_HTML = "destination page html";
-    private static final String COMPONENT_URL = "component url";
+    private static final String COMPONENT_URL1 = "component url1";
+    private static final String COMPONENT_URL2 = "component url2";
     private static final String TEMPLATE_URL = "templateUrl";
-    private static final String COMPONENT_PAGE_HTML = "component page html";
-    private static final String COMBINED_RESPONSE = "combined response";
 
     @Mock
     private WSWrapper wrapper;
     @Mock
     private UrlMappingsRetriever urlMappingsRetriever;
+    @Mock
+    private ResponseComposer responseComposer;
 
     private KikuyuController kikuyuController = new KikuyuController();
 
@@ -50,6 +47,7 @@ public class KikuyuControllerTest {
         MockitoAnnotations.initMocks(this);
         kikuyuController.setWsWrapper(wrapper);
         kikuyuController.setUrlMappingsRetriever(urlMappingsRetriever);
+        kikuyuController.setResponseComposer(responseComposer);
     }
 
     @Test
@@ -61,99 +59,37 @@ public class KikuyuControllerTest {
         final F.Promise<WS.Response> templateResponsePromise = mock(F.Promise.class);
         final WS.WSRequestHolder componentRequestHolder = mock(WS.WSRequestHolder.class);
         final F.Promise<WS.Response> componentResponsePromise = mock(F.Promise.class);
+        final WS.WSRequestHolder componentRequestHolder2 = mock(WS.WSRequestHolder.class);
+        final F.Promise<WS.Response> componentResponsePromise2 = mock(F.Promise.class);
 
         final Results.AsyncResult mockResult = mock(Results.AsyncResult.class);
-        final KikuyuController.ComposeClientResponseFunction outputFunction =
-                mock(KikuyuController.ComposeClientResponseFunction.class);
+        final ComposeClientResponseFunction outputFunction =
+                mock(ComposeClientResponseFunction.class);
 
 
         when(urlMappingsRetriever.getUrlMatcher()).thenReturn(urlMatcher);
-        when(urlMatcher.match(anyString())).thenReturn(new Page(TEMPLATE_URL, COMPONENT_URL));
+        when(urlMatcher.match(anyString())).thenReturn(new Page(Arrays.asList(TEMPLATE_URL, COMPONENT_URL1, COMPONENT_URL2)));
 
         when(wrapper.url(TEMPLATE_URL)).thenReturn(templateRequestHolder);
         when(templateRequestHolder.get()).thenReturn(templateResponsePromise);
 
-        when(wrapper.url(COMPONENT_URL)).thenReturn(componentRequestHolder);
+        when(wrapper.url(COMPONENT_URL1)).thenReturn(componentRequestHolder);
         when(componentRequestHolder.get()).thenReturn(componentResponsePromise);
 
-        PowerMockito.whenNew(KikuyuController.ComposeClientResponseFunction.class).withAnyArguments().thenReturn(outputFunction);
+        when(wrapper.url(COMPONENT_URL2)).thenReturn(componentRequestHolder2);
+        when(componentRequestHolder2.get()).thenReturn(componentResponsePromise2);
+
+        PowerMockito.whenNew(ComposeClientResponseFunction.class).withAnyArguments().thenReturn(outputFunction);
         PowerMockito.stub(PowerMockito.method(Results.class, "async")).toReturn(mockResult);
 
         Result result = kikuyuController.siphon(TEST_PATH);
 
         verify(wrapper).url(TEMPLATE_URL);
-        verify(wrapper).url(COMPONENT_URL);
+        verify(wrapper).url(COMPONENT_URL1);
         verify(templateRequestHolder).get();
         verify(componentRequestHolder).get();
-        PowerMockito.verifyNew(KikuyuController.ComposeClientResponseFunction.class).withNoArguments();
-    }
-
-
-    @Test
-    public void testOutputPageResponseAsTextToClientFunction() throws Throwable {
-        final WS.Response templatePageResponse = mock(WS.Response.class);
-        final WS.Response componentPageResponse = mock(WS.Response.class);
-        List<WS.Response> responses = new ArrayList<WS.Response>();
-        responses.add(templatePageResponse);
-        responses.add(componentPageResponse);
-        final ResponseComposer responseComposer = mock(ResponseComposer.class);
-
-        when(templatePageResponse.getHeader("Content-Type")).thenReturn("text/html");
-        when(templatePageResponse.getBody()).thenReturn(TEMPLATE_PAGE_HTML);
-        when(componentPageResponse.getBody()).thenReturn(COMPONENT_PAGE_HTML);
-        when(responseComposer.composeBody(TEMPLATE_PAGE_HTML, COMPONENT_PAGE_HTML)).thenReturn(COMBINED_RESPONSE);
-
-        final Results.Status okStatus = mock(Results.Status.class);
-        final Results.Status htmlStatus = mock(Results.Status.class);
-
-        PowerMockito.stub(PowerMockito.method(Results.class, "ok", String.class)).toReturn(okStatus);
-        when(okStatus.as("text/html")).thenReturn(htmlStatus);
-
-        final KikuyuController.ComposeClientResponseFunction outputPageWSResponse = new KikuyuController.ComposeClientResponseFunction(responseComposer);
-        final Result actualResult = outputPageWSResponse.apply(responses);
-
-        assertEquals(htmlStatus, actualResult);
-        verify(templatePageResponse).getHeader("Content-Type");
-        verify(templatePageResponse).getBody();
-        verify(componentPageResponse).getBody();
-        verify(responseComposer).composeBody(TEMPLATE_PAGE_HTML, COMPONENT_PAGE_HTML);
-        verify(okStatus).as("text/html");
-    }
-
-
-    @Test
-    public void testOutputPageResponseNOTAsTextToClientFunction() throws Throwable {
-        final WS.Response templatePageResponse = mock(WS.Response.class);
-        final WS.Response componentPageResponse = mock(WS.Response.class);
-        List<WS.Response> responses = new ArrayList<WS.Response>();
-        responses.add(templatePageResponse);
-        responses.add(componentPageResponse);
-
-        final Results.Status okStatus = mock(Results.Status.class);
-        final Results.Status httpStatus = mock(Results.Status.class);
-        final ResponseComposer responseComposer = mock(ResponseComposer.class);
-
-        when(templatePageResponse.getHeader("Content-Type")).thenReturn("binary");
-        when(templatePageResponse.getStatus()).thenReturn(200);
-        when(templatePageResponse.getBodyAsStream()).thenReturn(new InputStream() {
-            @Override
-            public int read() throws IOException {
-                return 0;
-            }
-        });
-        PowerMockito.stub(PowerMockito.method(Results.class, "status", int.class, InputStream.class)).toReturn(okStatus);
-        when(okStatus.as("binary")).thenReturn(httpStatus);
-
-        final KikuyuController.ComposeClientResponseFunction outputPageWSResponse = new KikuyuController.ComposeClientResponseFunction(responseComposer);
-        final Result actualResult = outputPageWSResponse.apply(responses);
-
-        assertEquals(httpStatus, actualResult);
-        verify(templatePageResponse).getHeader("Content-Type");
-        verify(templatePageResponse).getStatus();
-        verify(templatePageResponse).getBodyAsStream();
-        verify(okStatus).as("binary");
-        verify(componentPageResponse).getUri();
-        verifyNoMoreInteractions(componentPageResponse);
+        verify(componentRequestHolder2).get();
+        PowerMockito.verifyNew(ComposeClientResponseFunction.class).withArguments(responseComposer);
     }
 
 }

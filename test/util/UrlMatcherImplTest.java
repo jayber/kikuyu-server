@@ -13,11 +13,7 @@ import static org.mockito.Mockito.when;
 public class UrlMatcherImplTest {
 
     private static final String URL_FOR_WILD_CARD_MATCH = "urlForWildCardMatch";
-    private static final String URL_MAPPINGS = "[{\"class\":\"kikuyu.domain.UrlMapping\",\"id\":3,\"matchOrder\":0,\"page\":{\"class\":\"kikuyu.domain.Page\",\"id\":1,\"componentUrl\":\"componentUrl\",\"name\":\"blank\",\"url\":\"http://news.bbc.co.uk\"},\"pageId\":1,\"pattern\":\"bbc\"}," +
-            "{\"class\":\"kikuyu.domain.UrlMapping\",\"id\":11,\"matchOrder\":10,\"page\":{\"class\":\"kikuyu.domain.Page\",\"id\":1,\"componentUrl\":null,\"name\":\"blank\",\"url\":\"" + URL_FOR_WILD_CARD_MATCH + "\"},\"pageId\":1,\"pattern\":\".*\"}," +
-            "{\"class\":\"kikuyu.domain.UrlMapping\",\"id\":1,\"matchOrder\":1,\"page\":{\"class\":\"kikuyu.domain.Page\",\"id\":2,\"componentUrl\":null,\"name\":\"home\",\"url\":\"http://uk.practicallaw.com\"},\"pageId\":2,\"pattern\":\"page\"}," +
-            "{\"class\":\"kikuyu.domain.UrlMapping\",\"id\":1,\"matchOrder\":1,\"page\":{\"class\":\"kikuyu.domain.Page\",\"id\":2,\"componentUrl\":\"http://component/{0}\",\"name\":\"home\",\"url\":\"http://uk.practicallaw.com/{0}\"},\"pageId\":2,\"pattern\":\"page2\"}," +
-            "{\"class\":\"kikuyu.domain.UrlMapping\",\"id\":12,\"matchOrder\":11,\"page\":{\"class\":\"kikuyu.domain.Page\",\"id\":1,\"componentUrl\":null,\"name\":\"blank\",\"url\":\"whippetUrl\"},\"pageId\":1,\"pattern\":\"whippet\"}]";
+    private static final String URL_MAPPINGS = "testData.json";
     private static final String NO_SPECIFIC_MATCH = "noSpecificMatch";
 
     private UrlMatcherImpl urlMatcher;
@@ -25,44 +21,39 @@ public class UrlMatcherImplTest {
     @Before
     public void setUp() throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        final JsonNode jsonNode = mapper.readTree(URL_MAPPINGS);
+        final JsonNode jsonNode = mapper.readTree(this.getClass().getClassLoader().getResourceAsStream(URL_MAPPINGS));
         urlMatcher = new UrlMatcherImpl(jsonNode);
     }
 
     @Test
     public void testWildcardMatch() throws Exception {
-        assertEquals(URL_FOR_WILD_CARD_MATCH, urlMatcher.match(NO_SPECIFIC_MATCH).getTemplateUrl());
+        assertEquals(URL_FOR_WILD_CARD_MATCH, urlMatcher.match(NO_SPECIFIC_MATCH).getComponentUrls().get(0));
     }
 
     @Test
     public void testBeforeWildcardMatch() throws Exception {
-        assertEquals("http://news.bbc.co.uk", urlMatcher.match("bbc").getTemplateUrl());
+        assertEquals("http://news.bbc.co.uk", urlMatcher.match("bbc").getComponentUrls().get(0));
     }
 
     @Test
     public void testNeedsSortingBeforeWildcardMatch() throws Exception {
-        assertEquals("http://uk.practicallaw.com", urlMatcher.match("page").getTemplateUrl());
+        assertEquals("http://uk.practicallaw.com", urlMatcher.match("page").getComponentUrls().get(0));
     }
 
     @Test
     public void testWildcardMatchBecauseOfOrder() throws Exception {
-        assertEquals("urlForWildCardMatch", urlMatcher.match("whippet").getTemplateUrl());
+        assertEquals("urlForWildCardMatch", urlMatcher.match("whippet").getComponentUrls().get(0));
     }
 
     @Test
     public void testMatchingGroup() throws Exception {
-        assertEquals("http://uk.practicallaw.com/page2", urlMatcher.match("page2").getTemplateUrl());
-        assertEquals("http://component/page2", urlMatcher.match("page2").getComponentUrl());
+        assertEquals("http://uk.practicallaw.com/page2", urlMatcher.match("page2").getComponentUrls().get(0));
+        assertEquals("http://component/page2", urlMatcher.match("page2").getComponentUrls().get(1));
     }
 
     @Test
     public void testComponentUrl() throws Exception {
-        assertEquals("componentUrl", urlMatcher.match("bbc").getComponentUrl());
-    }
-
-    @Test
-    public void testComponentUrlNull() throws Exception {
-        assertEquals("", urlMatcher.match(NO_SPECIFIC_MATCH).getComponentUrl());
+        assertEquals("componentUrl", urlMatcher.match("bbc").getComponentUrls().get(1));
     }
 
     @Test

@@ -1,0 +1,122 @@
+[
+    {
+        "class": "kikuyu.domain.UrlMapping",
+        "id": 3,
+        "matchOrder": 0,
+        "page": {
+            "class": "kikuyu.domain.Page",
+            "id": 1,
+            "name": "blank",
+            "pageComponents": [
+                {
+                    "class": "kikuyu.domain.PageComponent",
+                    "id": null,
+                    "url": "http://news.bbc.co.uk"
+                },
+                {
+                    "class": "kikuyu.domain.PageComponent",
+                    "id": null,
+                    "url": "componentUrl"
+                }
+            ]
+        },
+        "pageId": 1,
+        "pattern": "bbc"
+    },
+    {
+        "class": "kikuyu.domain.UrlMapping",
+        "id": 11,
+        "matchOrder": 10,
+        "page": {
+            "class": "kikuyu.domain.Page",
+            "id": 1,
+            "name": "blank",
+            "pageComponents": [
+                {
+                    "class": "kikuyu.domain.PageComponent",
+                    "id": null,
+                    "url": "urlForWildCardMatch"
+                },
+                {
+                    "class": "kikuyu.domain.PageComponent",
+                    "id": null,
+                    "url": "http://localhost:8080/kikuyu/test/component"
+                }
+            ]
+        },
+        "pageId": 1,
+        "pattern": ".*"
+    },
+    {
+        "class": "kikuyu.domain.UrlMapping",
+        "id": 1,
+        "matchOrder": 1,
+        "page": {
+            "class": "kikuyu.domain.Page",
+            "id": 2,
+            "name": "home",
+            "pageComponents": [
+                {
+                    "class": "kikuyu.domain.PageComponent",
+                    "id": null,
+                    "url": "http://uk.practicallaw.com"
+                },
+                {
+                    "class": "kikuyu.domain.PageComponent",
+                    "id": null,
+                    "url": "http://localhost:8080/kikuyu/test/component"
+                }
+            ]
+        },
+        "pageId": 2,
+        "pattern": "page"
+    },
+    {
+        "class": "kikuyu.domain.UrlMapping",
+        "id": 1,
+        "matchOrder": 1,
+        "page": {
+            "class": "kikuyu.domain.Page",
+            "id": 2,
+            "name": "home",
+            "pageComponents": [
+                {
+                    "class": "kikuyu.domain.PageComponent",
+                    "id": null,
+                    "url": "http://uk.practicallaw.com/page2"
+                },
+                {
+                    "class": "kikuyu.domain.PageComponent",
+                    "id": null,
+                    "url": "http://component/page2"
+                }
+            ]
+        },
+        "pageId": 2,
+        "pattern": "page2"
+    },
+    {
+        "class": "kikuyu.domain.UrlMapping",
+        "id": 12,
+        "matchOrder": 11,
+        "page": {
+            "class": "kikuyu.domain.Page",
+            "id": 1,
+            "name": "blank",
+            "pageComponents": [
+                {
+                    "class": "kikuyu.domain.PageComponent",
+                    "id": null,
+                    "url": "http://localhost:8080/kikuyu/test/template"
+                },
+                {
+                    "class": "kikuyu.domain.PageComponent",
+                    "id": null,
+                    "url": "http://localhost:8080/kikuyu/test/component"
+                }
+            ]
+        },
+        "pageId": 1,
+        "pattern": "whippet"
+    }
+]

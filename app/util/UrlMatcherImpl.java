@@ -6,6 +6,7 @@ import org.codehaus.jackson.JsonNode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,9 +16,8 @@ public class UrlMatcherImpl implements UrlMatcher {
     public UrlMatcherImpl(JsonNode urlMappings) {
         for (JsonNode urlMapping : urlMappings) {
             final PatternPage patternPage = new PatternPage(urlMapping.path("pattern").asText(),
-                    urlMapping.path("page").path("url").asText(),
-                    urlMapping.path("matchOrder").asInt(),
-                    urlMapping.path("page").path("componentUrl").getTextValue());
+                    urlMapping.path("matchOrder").asInt(), urlMapping.path("page").path("pageComponents").findValuesAsText("url")
+            );
             patterns.add(patternPage);
         }
         Collections.sort(patterns, new Comparator<PatternPage>() {
@@ -40,26 +40,27 @@ public class UrlMatcherImpl implements UrlMatcher {
     }
 
     private Page createPage(PatternPage patternPage, Matcher matcher) {
-        String realTemplateUrl = resolveUrlFromExpression(matcher, patternPage.destinationUrl);
-        String realComponentUrl = resolveUrlFromExpression(matcher, patternPage.componentUrl);
-        return new Page(realTemplateUrl, realComponentUrl);
+        List realUrls = resolveUrlFromExpression(matcher, patternPage.urls);
+        return new Page(realUrls);
     }
 
-    private String resolveUrlFromExpression(Matcher matcher, final String url) {
-        return url.replace("{0}", matcher.group(0));
+    private List resolveUrlFromExpression(Matcher matcher, final List<String> urls) {
+        ArrayList<String> results = new ArrayList<String>(urls.size());
+        for (String url : urls) {
+            results.add(url.replace("{0}", matcher.group(0)));
+        }
+        return results;
     }
 
     private class PatternPage {
         private final Pattern pattern;
-        private final String destinationUrl;
         private int matchOrder;
-        private String componentUrl;
+        private final List<String> urls;
 
-        public PatternPage(String pattern, String destinationUrl, int matchOrder, String componentUrl) {
+        public PatternPage(String pattern, int matchOrder, List<String> urls) {
             this.matchOrder = matchOrder;
             this.pattern = Pattern.compile(pattern);
-            this.destinationUrl = destinationUrl;
-            this.componentUrl = componentUrl == null ? "" : componentUrl;
+            this.urls = urls;
         }
     }
 }
