@@ -20,13 +20,13 @@ public class UrlMappingsRetriever implements InitializingBean {
 
         final String wsRequestPath = kikuyuLayoutWebserviceAddress + URL_MAPPINGS;
 
-        Akka.system().scheduler().schedule(Duration.Zero(), Duration.create(reloadUrlMappingsFreqMins, TimeUnit.MINUTES), new Runnable() {
-            @Override
-            public void run() {
-                loadUrlMappings(wsRequestPath);
-            }
-        }, Akka.system().dispatcher());
-
+        Akka.system().scheduler().schedule(Duration.Zero(), Duration.create(reloadUrlMappingsFreqMins, TimeUnit.MINUTES),
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        loadUrlMappings(wsRequestPath);
+                    }
+                }, Akka.system().dispatcher());
     }
 
     //default visibility for test access
