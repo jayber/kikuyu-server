@@ -1,7 +1,9 @@
 package util;
 
+import domain.ComponentUrl;
 import domain.Page;
 import org.codehaus.jackson.JsonNode;
+import play.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,9 +17,13 @@ public class UrlMatcherImpl implements UrlMatcher {
 
     public UrlMatcherImpl(JsonNode urlMappings) {
         for (JsonNode urlMapping : urlMappings) {
+            final JsonNode pageComponents = urlMapping.path("page").path("pageComponents");
+            List<ComponentUrl> componentUrls = new ArrayList();
+            for (JsonNode pageComponent : pageComponents) {
+                componentUrls.add(new ComponentUrl(pageComponent.path("url").asText(), pageComponent.path("acceptPost").asBoolean()));
+            }
             final PatternPage patternPage = new PatternPage(urlMapping.path("pattern").asText(),
-                    urlMapping.path("matchOrder").asInt(), urlMapping.path("page").path("pageComponents").findValuesAsText("url")
-            );
+                    urlMapping.path("matchOrder").asInt(), componentUrls);
             patterns.add(patternPage);
         }
         Collections.sort(patterns, new Comparator<PatternPage>() {
@@ -33,6 +39,7 @@ public class UrlMatcherImpl implements UrlMatcher {
         for (PatternPage patternPage : patterns) {
             final Matcher matcher = patternPage.pattern.matcher(path);
             if (matcher.matches()) {
+                Logger.debug("Path: " + path + " matches pattern: " + patternPage.pattern.pattern() + ". " + patternPage.urls);
                 return createPage(patternPage, matcher);
             }
         }
@@ -40,14 +47,14 @@ public class UrlMatcherImpl implements UrlMatcher {
     }
 
     private Page createPage(PatternPage patternPage, Matcher matcher) {
-        List realUrls = resolveUrlFromExpression(matcher, patternPage.urls);
+        List<ComponentUrl> realUrls = resolveUrlFromExpression(matcher, patternPage.urls);
         return new Page(realUrls);
     }
 
-    private List resolveUrlFromExpression(Matcher matcher, final List<String> urls) {
-        ArrayList<String> results = new ArrayList<String>(urls.size());
-        for (String url : urls) {
-            results.add(url.replace("{0}", matcher.group(0)));
+    private List<ComponentUrl> resolveUrlFromExpression(Matcher matcher, final List<ComponentUrl> urls) {
+        ArrayList<ComponentUrl> results = new ArrayList<ComponentUrl>(urls.size());
+        for (ComponentUrl componentUrl : urls) {
+            results.add(new ComponentUrl(componentUrl.getUrl().replace("{0}", matcher.group(0)), componentUrl.isAcceptPost()));
         }
         return results;
     }
@@ -55,9 +62,9 @@ public class UrlMatcherImpl implements UrlMatcher {
     private class PatternPage {
         private final Pattern pattern;
         private int matchOrder;
-        private final List<String> urls;
+        private final List<ComponentUrl> urls;
 
-        public PatternPage(String pattern, int matchOrder, List<String> urls) {
+        public PatternPage(String pattern, int matchOrder, List<ComponentUrl> urls) {
             this.matchOrder = matchOrder;
             this.pattern = Pattern.compile(pattern);
             this.urls = urls;

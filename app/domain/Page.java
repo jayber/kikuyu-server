@@ -3,13 +3,13 @@ package domain;
 import java.util.List;
 
 public class Page {
-    private List<String> componentUrls;
+    private List<ComponentUrl> componentUrls;
 
-    public Page(List componentUrls) {
+    public Page(List<ComponentUrl> componentUrls) {
         this.componentUrls = componentUrls;
     }
 
-    public List<String> getComponentUrls() {
+    public List<ComponentUrl> getComponentUrls() {
         return componentUrls;
     }
 }

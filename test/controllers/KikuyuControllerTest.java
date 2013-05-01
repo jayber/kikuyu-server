@@ -1,6 +1,7 @@
 package controllers;
 
 import controllers.ws.WSWrapper;
+import domain.ComponentUrl;
 import domain.Page;
 import org.junit.Before;
 import org.junit.Test;
@@ -68,7 +69,8 @@ public class KikuyuControllerTest {
 
 
         when(urlMappingsRetriever.getUrlMatcher()).thenReturn(urlMatcher);
-        when(urlMatcher.match(anyString())).thenReturn(new Page(Arrays.asList(TEMPLATE_URL, COMPONENT_URL1, COMPONENT_URL2)));
+        when(urlMatcher.match(anyString())).thenReturn(new Page(Arrays.asList(new ComponentUrl(TEMPLATE_URL, false),
+                new ComponentUrl(COMPONENT_URL1, false), new ComponentUrl(COMPONENT_URL2, false))));
 
         when(wrapper.url(TEMPLATE_URL)).thenReturn(templateRequestHolder);
         when(templateRequestHolder.get()).thenReturn(templateResponsePromise);
