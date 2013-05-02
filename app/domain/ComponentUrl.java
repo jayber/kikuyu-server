@@ -3,10 +3,12 @@ package domain;
 public class ComponentUrl {
     private String url;
     private boolean acceptPost;
+    private boolean template;
 
-    public ComponentUrl(String url, boolean acceptPost) {
+    public ComponentUrl(String url, boolean acceptPost, boolean template) {
         this.url = url;
         this.acceptPost = acceptPost;
+        this.template = template;
     }
 
     public String getUrl() {
@@ -23,5 +25,13 @@ public class ComponentUrl {
 
     public void setAcceptPost(boolean acceptPost) {
         this.acceptPost = acceptPost;
+    }
+
+    public boolean isTemplate() {
+        return template;
+    }
+
+    public void setTemplate(boolean template) {
+        this.template = template;
     }
 }

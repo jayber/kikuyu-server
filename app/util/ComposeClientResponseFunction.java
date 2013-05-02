@@ -1,5 +1,6 @@
 package util;
 
+import domain.Page;
 import play.Logger;
 import play.libs.F;
 import play.libs.WS;
@@ -10,9 +11,11 @@ import java.util.List;
 
 public class ComposeClientResponseFunction implements F.Function<List<WS.Response>, Result> {
     private ResponseComposer responseComposer;
+    private Page page;
 
-    public ComposeClientResponseFunction(ResponseComposer responseComposer) {
+    public ComposeClientResponseFunction(ResponseComposer responseComposer, Page matchingPage) {
         this.responseComposer = responseComposer;
+        this.page = matchingPage;
     }
 
     @Override
@@ -25,7 +28,7 @@ public class ComposeClientResponseFunction implements F.Function<List<WS.Respons
             String responseBodies[] = new String[responses.size()];
             responseBodies[0] = templateResponse.getBody();
             populateBodies(responseBodies, responses);
-            status = Results.ok(responseComposer.composeBody(responseBodies)).as(templateContentType);
+            status = Results.ok(responseComposer.composeBody(page, responseBodies)).as(templateContentType);
         } else {
             status = Results.status(templateResponse.getStatus(), templateResponse.getBodyAsStream()).as(templateContentType);
         }

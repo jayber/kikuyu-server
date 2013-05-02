@@ -1,5 +1,7 @@
 package util;
 
+import domain.Page;
+
 public interface ResponseComposer {
-    String composeBody(String... body);
+    String composeBody(Page page, String... body);
 }

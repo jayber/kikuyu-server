@@ -1,8 +1,10 @@
 package util;
 
+import domain.Page;
+
 public class ResponseComposerImpl implements ResponseComposer {
     @Override
-    public String composeBody(String... bodies) {
+    public String composeBody(Page page, String... bodies) {
         String templateText = bodies[0];
 
         // starting at 1 is not a mistake!

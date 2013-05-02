@@ -69,8 +69,8 @@ public class KikuyuControllerTest {
 
 
         when(urlMappingsRetriever.getUrlMatcher()).thenReturn(urlMatcher);
-        when(urlMatcher.match(anyString())).thenReturn(new Page(Arrays.asList(new ComponentUrl(TEMPLATE_URL, false),
-                new ComponentUrl(COMPONENT_URL1, false), new ComponentUrl(COMPONENT_URL2, false))));
+        when(urlMatcher.match(anyString())).thenReturn(new Page(Arrays.asList(new ComponentUrl(TEMPLATE_URL, false, true),
+                new ComponentUrl(COMPONENT_URL1, false, true), new ComponentUrl(COMPONENT_URL2, false, true))));
 
         when(wrapper.url(TEMPLATE_URL)).thenReturn(templateRequestHolder);
         when(templateRequestHolder.get()).thenReturn(templateResponsePromise);

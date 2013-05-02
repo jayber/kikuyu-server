@@ -13,6 +13,7 @@ import util.UrlMappingsRetriever;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 
@@ -31,51 +32,68 @@ public class KikuyuController extends Controller {
     //todo: record each request that is mapped to a url and show in urlmappings number of requests in last month, so can delete mappings that aren't being used
     //todo: copy headers (e.g. cookies) from original request into sub requests and then from responses
     public Result siphon(String path) {
-        final Page match = urlMappingsRetriever.getUrlMatcher().match(path);
+        final Page matchingPage = urlMappingsRetriever.getUrlMatcher().match(path);
 
-        F.Promise<WS.Response>[] promises = getPromisesForUrls(match);
+        F.Promise<WS.Response>[] promises = getPromisesForUrls(matchingPage.getComponentUrls());
 
         F.Promise<List<WS.Response>> promisesSequence = F.Promise.sequence(promises);
-        F.Promise<Result> resultPromise = promisesSequence.map(new ComposeClientResponseFunction(responseComposer));
+        F.Promise<Result> resultPromise = promisesSequence.map(new ComposeClientResponseFunction(responseComposer, matchingPage));
 
         return async(resultPromise);
     }
 
-    private F.Promise<WS.Response>[] getPromisesForUrls(Page match) {
-        final List<ComponentUrl> componentUrls = match.getComponentUrls();
+    private F.Promise<WS.Response>[] getPromisesForUrls(List<ComponentUrl> componentUrls) {
         F.Promise<WS.Response>[] promises = new F.Promise[componentUrls.size()];
         for (int i = 0; i < componentUrls.size(); i++) {
             ComponentUrl componentUrl = componentUrls.get(i);
+
             final String[] urlParts = splitUrl(componentUrl.getUrl());
+
             final WS.WSRequestHolder urlHolder = wsWrapper.url(urlParts[0]);
-            for (int j = 1; j < urlParts.length; j++) {
-                String name = urlParts[j];
-                if (urlParts.length > j + 1) {
-                    try {
-                        urlHolder.setQueryParameter(name, URLDecoder.decode(urlParts[++j], "UTF-8"));
-                    } catch (UnsupportedEncodingException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
-                    urlHolder.setQueryParameter(name, "");
-                }
-            }
-            final F.Promise<WS.Response> componentPromise;
-            if (request().method().equals(POST) && componentUrl.isAcceptPost()) {
-                componentPromise = urlHolder.post(getPostData(request().body().asFormUrlEncoded()));
-            } else {
-                componentPromise = urlHolder.execute(GET);
-            }
-            promises[i] = componentPromise;
+
+            copyQueryParams(urlParts, urlHolder);
+
+            promises[i] = setMethod(componentUrl, urlHolder);
         }
         return promises;
+    }
+
+    private F.Promise<WS.Response> setMethod(ComponentUrl componentUrl, WS.WSRequestHolder urlHolder) {
+        F.Promise<WS.Response> componentPromise;
+        if (request().method().equals(POST) && componentUrl.isAcceptPost()) {
+            final String postData = getPostData(request().body().asFormUrlEncoded());
+            urlHolder.setContentType("application/x-www-form-urlencoded");
+            componentPromise = urlHolder.post(postData);
+        } else {
+            componentPromise = urlHolder.execute(GET);
+        }
+        return componentPromise;
+    }
+
+    private void copyQueryParams(String[] urlParts, WS.WSRequestHolder urlHolder) {
+        for (int j = 1; j < urlParts.length; j++) {
+            String name = urlParts[j];
+            if (urlParts.length > j + 1) {
+                try {
+                    urlHolder.setQueryParameter(name, URLDecoder.decode(urlParts[++j], "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                urlHolder.setQueryParameter(name, "");
+            }
+        }
     }
 
     private String getPostData(Map<String, String[]> map) {
         StringBuilder sb = new StringBuilder();
         int i = 0;
         for (String key : map.keySet()) {
-            sb.append(key).append("=").append(map.get(key)[0]);
+            try {
+                sb.append(URLEncoder.encode(key, "UTF-8")).append("=").append(URLEncoder.encode(map.get(key)[0], "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
             if (map.size() - 1 > i++) {
                 sb.append("&");
             }

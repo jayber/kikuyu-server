@@ -40,7 +40,7 @@ public class ComposeClientResponseFunctionTest {
         when(templatePageResponse.getBody()).thenReturn(TEMPLATE_PAGE_HTML);
         when(componentPageResponse1.getBody()).thenReturn(COMPONENT1_PAGE_HTML);
         when(componentPageResponse2.getBody()).thenReturn(COMPONENT2_PAGE_HTML);
-        when(responseComposer.composeBody(TEMPLATE_PAGE_HTML, COMPONENT1_PAGE_HTML, COMPONENT2_PAGE_HTML)).thenReturn(COMBINED_RESPONSE);
+        when(responseComposer.composeBody(TestFixtures.page, TEMPLATE_PAGE_HTML, COMPONENT1_PAGE_HTML, COMPONENT2_PAGE_HTML)).thenReturn(COMBINED_RESPONSE);
 
         final Results.Status okStatus = mock(Results.Status.class);
         final Results.Status htmlStatus = mock(Results.Status.class);
@@ -48,7 +48,7 @@ public class ComposeClientResponseFunctionTest {
         PowerMockito.stub(PowerMockito.method(Results.class, "ok", String.class)).toReturn(okStatus);
         when(okStatus.as("text/html")).thenReturn(htmlStatus);
 
-        final ComposeClientResponseFunction outputPageWSResponse = new ComposeClientResponseFunction(responseComposer);
+        final ComposeClientResponseFunction outputPageWSResponse = new ComposeClientResponseFunction(responseComposer, TestFixtures.page);
         final Result actualResult = outputPageWSResponse.apply(responses);
 
         assertEquals(htmlStatus, actualResult);
@@ -56,7 +56,7 @@ public class ComposeClientResponseFunctionTest {
         verify(templatePageResponse).getBody();
         verify(componentPageResponse1).getBody();
         verify(componentPageResponse2).getBody();
-        verify(responseComposer).composeBody(TEMPLATE_PAGE_HTML, COMPONENT1_PAGE_HTML, COMPONENT2_PAGE_HTML);
+        verify(responseComposer).composeBody(TestFixtures.page, TEMPLATE_PAGE_HTML, COMPONENT1_PAGE_HTML, COMPONENT2_PAGE_HTML);
         verify(okStatus).as("text/html");
     }
 
@@ -84,7 +84,7 @@ public class ComposeClientResponseFunctionTest {
         PowerMockito.stub(PowerMockito.method(Results.class, "status", int.class, InputStream.class)).toReturn(okStatus);
         when(okStatus.as("binary")).thenReturn(httpStatus);
 
-        final ComposeClientResponseFunction outputPageWSResponse = new ComposeClientResponseFunction(responseComposer);
+        final ComposeClientResponseFunction outputPageWSResponse = new ComposeClientResponseFunction(responseComposer, TestFixtures.page);
         final Result actualResult = outputPageWSResponse.apply(responses);
 
         assertEquals(httpStatus, actualResult);

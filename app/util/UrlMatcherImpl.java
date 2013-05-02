@@ -20,7 +20,7 @@ public class UrlMatcherImpl implements UrlMatcher {
             final JsonNode pageComponents = urlMapping.path("page").path("pageComponents");
             List<ComponentUrl> componentUrls = new ArrayList();
             for (JsonNode pageComponent : pageComponents) {
-                componentUrls.add(new ComponentUrl(pageComponent.path("url").asText(), pageComponent.path("acceptPost").asBoolean()));
+                componentUrls.add(new ComponentUrl(pageComponent.path("url").asText(), pageComponent.path("acceptPost").asBoolean(), true));
             }
             final PatternPage patternPage = new PatternPage(urlMapping.path("pattern").asText(),
                     urlMapping.path("matchOrder").asInt(), componentUrls);
@@ -54,7 +54,7 @@ public class UrlMatcherImpl implements UrlMatcher {
     private List<ComponentUrl> resolveUrlFromExpression(Matcher matcher, final List<ComponentUrl> urls) {
         ArrayList<ComponentUrl> results = new ArrayList<ComponentUrl>(urls.size());
         for (ComponentUrl componentUrl : urls) {
-            results.add(new ComponentUrl(componentUrl.getUrl().replace("{0}", matcher.group(0)), componentUrl.isAcceptPost()));
+            results.add(new ComponentUrl(componentUrl.getUrl().replace("{0}", matcher.group(0)), componentUrl.isAcceptPost(), true));
         }
         return results;
     }

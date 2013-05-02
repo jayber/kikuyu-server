@@ -14,13 +14,15 @@ public class UrlMappingsRetriever implements InitializingBean {
 
     private String kikuyuLayoutWebserviceAddress;
     private UrlMatcher urlMatcher;
-    private int reloadUrlMappingsFreqMins = 1;
+    private int reloadUrlMappingsFreqSecs = 10;
 
     public void afterPropertiesSet() {
 
         final String wsRequestPath = kikuyuLayoutWebserviceAddress + URL_MAPPINGS;
 
-        Akka.system().scheduler().schedule(Duration.Zero(), Duration.create(reloadUrlMappingsFreqMins, TimeUnit.MINUTES),
+        loadUrlMappings(wsRequestPath);
+
+        Akka.system().scheduler().schedule(Duration.Zero(), Duration.create(reloadUrlMappingsFreqSecs, TimeUnit.SECONDS),
                 new Runnable() {
                     @Override
                     public void run() {
@@ -31,7 +33,7 @@ public class UrlMappingsRetriever implements InitializingBean {
 
     //default visibility for test access
     void loadUrlMappings(String wsRequestPath) {
-        Logger.info("Loading urlMappings from: " + wsRequestPath);
+        Logger.debug("Loading urlMappings from: " + wsRequestPath);
         RestTemplate restTemplate = new RestTemplate();
         JsonNode jsonNode = restTemplate.getForObject(wsRequestPath, JsonNode.class);
         urlMatcher = new UrlMatcherImpl(jsonNode);
@@ -45,7 +47,7 @@ public class UrlMappingsRetriever implements InitializingBean {
         this.kikuyuLayoutWebserviceAddress = kikuyuLayoutWebserviceAddress;
     }
 
-    public void setReloadUrlMappingsFreqMins(int reloadUrlMappingsFreqMins) {
-        this.reloadUrlMappingsFreqMins = reloadUrlMappingsFreqMins;
+    public void setReloadUrlMappingsFreqSecs(int reloadUrlMappingsFreqSecs) {
+        this.reloadUrlMappingsFreqSecs = reloadUrlMappingsFreqSecs;
     }
 }
