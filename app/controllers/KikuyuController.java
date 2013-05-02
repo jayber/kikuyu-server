@@ -62,7 +62,7 @@ public class KikuyuController extends Controller {
         F.Promise<WS.Response> componentPromise;
         if (request().method().equals(POST) && componentUrl.isAcceptPost()) {
             final String postData = getPostData(request().body().asFormUrlEncoded());
-            urlHolder.setContentType("application/x-www-form-urlencoded");
+            urlHolder.setContentType(request().getHeader("Content-Type"));
             componentPromise = urlHolder.post(postData);
         } else {
             componentPromise = urlHolder.execute(GET);
