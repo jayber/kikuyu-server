@@ -53,12 +53,12 @@ public class KikuyuController extends Controller {
 
             copyQueryParams(urlParts, urlHolder);
 
-            promises[i] = setMethod(componentUrl, urlHolder);
+            promises[i] = determineMethodAndSetHeadersAndBody(componentUrl, urlHolder);
         }
         return promises;
     }
 
-    private F.Promise<WS.Response> setMethod(ComponentUrl componentUrl, WS.WSRequestHolder urlHolder) {
+    private F.Promise<WS.Response> determineMethodAndSetHeadersAndBody(ComponentUrl componentUrl, WS.WSRequestHolder urlHolder) {
         F.Promise<WS.Response> componentPromise;
         if (request().method().equals(POST) && componentUrl.isAcceptPost()) {
             final String postData = getPostData(request().body().asFormUrlEncoded());

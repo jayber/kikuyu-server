@@ -13,6 +13,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import play.libs.F;
 import play.libs.WS;
+import play.mvc.Controller;
+import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
 import util.ComposeClientResponseFunction;
@@ -26,7 +28,7 @@ import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(KikuyuController.class)
+@PrepareForTest(value = {KikuyuController.class, F.Promise.class})
 public class KikuyuControllerTest {
 
     private static final String TEST_PATH = "testPath";
@@ -52,7 +54,7 @@ public class KikuyuControllerTest {
     }
 
     @Test
-    public void testSiphon() throws Exception {
+    public void testSiphon() throws Throwable {
 
         final UrlMatcher urlMatcher = mock(UrlMatcher.class);
 
@@ -66,6 +68,7 @@ public class KikuyuControllerTest {
         final Results.AsyncResult mockResult = mock(Results.AsyncResult.class);
         final ComposeClientResponseFunction outputFunction =
                 mock(ComposeClientResponseFunction.class);
+        final Http.Request request = mock(Http.Request.class);
 
 
         when(urlMappingsRetriever.getUrlMatcher()).thenReturn(urlMatcher);
@@ -81,8 +84,20 @@ public class KikuyuControllerTest {
         when(wrapper.url(COMPONENT_URL2)).thenReturn(componentRequestHolder2);
         when(componentRequestHolder2.get()).thenReturn(componentResponsePromise2);
 
+        PowerMockito.mockStatic(Controller.class);
+        PowerMockito.when(Controller.request()).thenReturn(request);
+        when(request.method()).thenReturn("GET");
+
+        PowerMockito.spy(F.Promise.class);
+        F.Promise promisesSequence = mock(F.Promise.class);
+
+
+        PowerMockito.when(PowerMockito.method(F.Promise.class, "sequence", F.Promise[].class)).thenReturn(promisesSequence);
+        when(promisesSequence.map(any(F.Function.class))).thenReturn(mock(F.Promise.class));
+
         PowerMockito.whenNew(ComposeClientResponseFunction.class).withAnyArguments().thenReturn(outputFunction);
         PowerMockito.stub(PowerMockito.method(Results.class, "async")).toReturn(mockResult);
+
 
         Result result = kikuyuController.siphon(TEST_PATH);
 
