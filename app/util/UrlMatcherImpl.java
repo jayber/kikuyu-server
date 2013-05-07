@@ -47,11 +47,11 @@ public class UrlMatcherImpl implements UrlMatcher {
     }
 
     private Page createPage(PatternPage patternPage, Matcher matcher) {
-        List<ComponentUrl> realUrls = resolveUrlFromExpression(matcher, patternPage.urls);
+        List<ComponentUrl> realUrls = resolveUrlsFromExpressions(matcher, patternPage.urls);
         return new Page(realUrls);
     }
 
-    private List<ComponentUrl> resolveUrlFromExpression(Matcher matcher, final List<ComponentUrl> urls) {
+    private List<ComponentUrl> resolveUrlsFromExpressions(Matcher matcher, final List<ComponentUrl> urls) {
         ArrayList<ComponentUrl> results = new ArrayList<ComponentUrl>(urls.size());
         for (ComponentUrl componentUrl : urls) {
             results.add(new ComponentUrl(componentUrl.getUrl().replace("{0}", matcher.group(0)), componentUrl.isAcceptPost(), true));
