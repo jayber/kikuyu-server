@@ -89,7 +89,7 @@ public class KikuyuControllerTest {
         PowerMockito.stub(PowerMockito.method(Controller.class, "request")).toReturn(mockRequest);
         when(mockRequest.method()).thenReturn("GET");
         HashMap headers = new HashMap();
-        headers.put("name", new String[]{"value"});
+        headers.put("Content-Type", new String[]{"value"});
         when(mockRequest.headers()).thenReturn(headers);
 
         PowerMockito.whenNew(ComposeClientResponseFunction.class).withAnyArguments().thenReturn(outputFunction);
@@ -104,13 +104,13 @@ public class KikuyuControllerTest {
         verify(wrapper).url(COMPONENT_URL2);
 
         verify(templateRequestHolder).get();
-        verify(templateRequestHolder).setHeader("name", "value");
+        verify(templateRequestHolder).setHeader("Content-Type", "value");
 
         verify(componentRequestHolder).get();
-        verify(componentRequestHolder).setHeader("name", "value");
+        verify(componentRequestHolder).setHeader("Content-Type", "value");
 
         verify(componentRequestHolder2).get();
-        verify(componentRequestHolder2).setHeader("name", "value");
+        verify(componentRequestHolder2).setHeader("Content-Type", "value");
 
         PowerMockito.verifyNew(ComposeClientResponseFunction.class).withArguments(responseComposer, page);
     }

@@ -72,11 +72,15 @@ public class KikuyuController extends Controller {
     }
 
     private void copyHeaders(WS.WSRequestHolder urlHolder, Http.Request request) {
+        //todo: copying all header causes problems, so just copying Content-Type and Cookie for now
+        String[] headerNames = new String[]{"Content-Type", "Cookie"};
         Map<String, String[]> headers = request.headers();
-        for (String key : headers.keySet()) {
+        for (String key : headerNames) {
             String[] values = headers.get(key);
-            for (String value : values) {
-                urlHolder.setHeader(key, value);
+            if (values != null) {
+                for (String value : values) {
+                    urlHolder.setHeader(key, value);
+                }
             }
         }
     }

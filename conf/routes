@@ -3,8 +3,9 @@
 # ~~~~
 
 # Home page
-GET     /                           @controllers.KikuyuController.index()
+GET     /                           @controllers.KikuyuController.siphon(path ?= "")
 GET     /*path                      @controllers.KikuyuController.siphon(path)
+POST     /                          @controllers.KikuyuController.siphon(path ?= "")
 POST     /*path                      @controllers.KikuyuController.siphon(path)
 
 # Map static resources from the /public folder to the /assets URL path
