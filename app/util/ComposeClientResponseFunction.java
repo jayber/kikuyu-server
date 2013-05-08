@@ -5,12 +5,28 @@ import play.Logger;
 import play.libs.F;
 import play.libs.WS;
 import play.mvc.Controller;
+import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
 
 import java.util.List;
 
 public class ComposeClientResponseFunction implements F.Function<List<WS.Response>, Result> {
+    //todo: for some reason the WS.response doesn't list the headers, so you have to guess!
+    public static final String[] HEADER_NAMES = new String[]
+            {
+                    "Content-Type",
+                    "Cache-Control",
+                    "Connection",
+                    "Content-Encoding",
+                    "Content-Type",
+                    "Date",
+                    "Expires",
+                    "Keep-Alive",
+                    "Set-Cookie",
+                    "Vary"
+            };
+
     private ResponseComposer responseComposer;
     private Page page;
 
@@ -24,30 +40,19 @@ public class ComposeClientResponseFunction implements F.Function<List<WS.Respons
         WS.Response templateResponse = responses.get(0);
         Logger.info("template content from: " + templateResponse.getUri());
 
-        //todo: for some reason the WS.response doesn't list the headers, so you have to guess!
-        String[] headers = new String[]
-                {
-                        "Content-Type",
-                        "Cache-Control",
-                        "Connection",
-                        "Content-Encoding",
-                        "Content-Type",
-                        "Date",
-                        "Expires",
-                        "Keep-Alive",
-                        "Set-Cookie",
-                        "Vary"
-                };
+        final Http.Response response = Controller.response();
 
-        for (String header : headers) {
-            String headerValue = templateResponse.getHeader(header);
-            if (headerValue != null) {
-                Controller.response().setHeader(header, headerValue);
-            }
-        }
+        copyResponseHeaders(templateResponse, response);
 
-        final String templateContentType = templateResponse.getHeader("Content-Type");
+        Results.Status status = mergeIncomingResponsesToOutgoingResponse(responses);
+
+        return status;
+    }
+
+    private Results.Status mergeIncomingResponsesToOutgoingResponse(List<WS.Response> responses) {
+        WS.Response templateResponse = responses.get(0);
         Results.Status status;
+        final String templateContentType = templateResponse.getHeader("Content-Type");
         //todo: should probably make set of Content-Types that can be processed an application setting
         if (templateContentType.startsWith("text")) {
             String responseBodies[] = new String[responses.size()];
@@ -58,6 +63,15 @@ public class ComposeClientResponseFunction implements F.Function<List<WS.Respons
             status = Results.status(templateResponse.getStatus(), templateResponse.getBodyAsStream()).as(templateContentType);
         }
         return status;
+    }
+
+    private void copyResponseHeaders(WS.Response incomingResponse, Http.Response outgoingResponse) {
+        for (String header : HEADER_NAMES) {
+            String headerValue = incomingResponse.getHeader(header);
+            if (headerValue != null) {
+                outgoingResponse.setHeader(header, headerValue);
+            }
+        }
     }
 
     private void populateBodies(String[] responseBodies, List<WS.Response> responses) {

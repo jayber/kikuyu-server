@@ -6,6 +6,8 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import play.libs.WS;
+import play.mvc.Controller;
+import play.mvc.Http.Response;
 import play.mvc.Result;
 import play.mvc.Results;
 
@@ -18,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(Results.class)
+@PrepareForTest(value = {Results.class, Controller.class})
 public class ComposeClientResponseFunctionTest {
     private static final String TEMPLATE_PAGE_HTML = "destination page html";
     private static final String COMPONENT1_PAGE_HTML = "component1 page html";
@@ -36,6 +38,8 @@ public class ComposeClientResponseFunctionTest {
         responses.add(componentPageResponse2);
         final ResponseComposer responseComposer = mock(ResponseComposer.class);
 
+        PowerMockito.stub(PowerMockito.method(Controller.class, "response")).toReturn(mock(Response.class));
+
         when(templatePageResponse.getHeader("Content-Type")).thenReturn("text/html");
         when(templatePageResponse.getBody()).thenReturn(TEMPLATE_PAGE_HTML);
         when(componentPageResponse1.getBody()).thenReturn(COMPONENT1_PAGE_HTML);
@@ -52,7 +56,14 @@ public class ComposeClientResponseFunctionTest {
         final Result actualResult = outputPageWSResponse.apply(responses);
 
         assertEquals(htmlStatus, actualResult);
-        verify(templatePageResponse).getHeader("Content-Type");
+        verify(templatePageResponse, times(3)).getHeader("Content-Type");
+
+        for (String header : ComposeClientResponseFunction.HEADER_NAMES) {
+            if (!"Content-Type".equals(header)) {
+                verify(templatePageResponse).getHeader(header);
+            }
+        }
+
         verify(templatePageResponse).getBody();
         verify(componentPageResponse1).getBody();
         verify(componentPageResponse2).getBody();
@@ -73,6 +84,8 @@ public class ComposeClientResponseFunctionTest {
         final Results.Status httpStatus = mock(Results.Status.class);
         final ResponseComposer responseComposer = mock(ResponseComposer.class);
 
+        PowerMockito.stub(PowerMockito.method(Controller.class, "response")).toReturn(mock(Response.class));
+
         when(templatePageResponse.getHeader("Content-Type")).thenReturn("binary");
         when(templatePageResponse.getStatus()).thenReturn(200);
         when(templatePageResponse.getBodyAsStream()).thenReturn(new InputStream() {
@@ -88,7 +101,13 @@ public class ComposeClientResponseFunctionTest {
         final Result actualResult = outputPageWSResponse.apply(responses);
 
         assertEquals(httpStatus, actualResult);
-        verify(templatePageResponse).getHeader("Content-Type");
+        verify(templatePageResponse, times(3)).getHeader("Content-Type");
+
+        for (String header : ComposeClientResponseFunction.HEADER_NAMES) {
+            if (!"Content-Type".equals(header)) {
+                verify(templatePageResponse).getHeader(header);
+            }
+        }
         verify(templatePageResponse).getStatus();
         verify(templatePageResponse).getBodyAsStream();
         verify(okStatus).as("binary");

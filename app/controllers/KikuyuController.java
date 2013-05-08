@@ -26,10 +26,6 @@ public class KikuyuController extends Controller {
     private WSWrapper wsWrapper;
     private ResponseComposer responseComposer;
 
-    public Result index() {
-        return ok("this is it");
-    }
-
     //todo: record each request that is mapped to a url and show in urlmappings number of requests in last month, so can delete mappings that aren't being used
     //todo: copy headers (e.g. cookies) from original request into sub requests and then from responses
     public Result siphon(String path) {
