@@ -5,7 +5,7 @@
 
     <bean id="urlMappingsRetriever" class="util.UrlMappingsRetriever">
         <property name="kikuyuLayoutWebserviceAddress" value="http://localhost:8080/kikuyu/ws"/>
-        <property name="reloadUrlMappingsFreqSecs" value="10"/>
+        <property name="reloadUrlMappingsFreqSecs" value="60"/>
     </bean>
 
     <bean id="kikuyuController" class="controllers.KikuyuController">

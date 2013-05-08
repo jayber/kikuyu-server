@@ -4,6 +4,7 @@ import domain.Page;
 import play.Logger;
 import play.libs.F;
 import play.libs.WS;
+import play.mvc.Controller;
 import play.mvc.Result;
 import play.mvc.Results;
 
@@ -22,8 +23,32 @@ public class ComposeClientResponseFunction implements F.Function<List<WS.Respons
     public Result apply(List<WS.Response> responses) throws Throwable {
         WS.Response templateResponse = responses.get(0);
         Logger.info("template content from: " + templateResponse.getUri());
+
+        //todo: for some reason the WS.response doesn't list the headers, so you have to guess!
+        String[] headers = new String[]
+                {
+                        "Content-Type",
+                        "Cache-Control",
+                        "Connection",
+                        "Content-Encoding",
+                        "Content-Type",
+                        "Date",
+                        "Expires",
+                        "Keep-Alive",
+                        "Set-Cookie",
+                        "Vary"
+                };
+
+        for (String header : headers) {
+            String headerValue = templateResponse.getHeader(header);
+            if (headerValue != null) {
+                Controller.response().setHeader(header, headerValue);
+            }
+        }
+
         final String templateContentType = templateResponse.getHeader("Content-Type");
         Results.Status status;
+        //todo: should probably make set of Content-Types that can be processed an application setting
         if (templateContentType.startsWith("text")) {
             String responseBodies[] = new String[responses.size()];
             responseBodies[0] = templateResponse.getBody();

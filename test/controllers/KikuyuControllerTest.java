@@ -23,12 +23,13 @@ import util.UrlMappingsRetriever;
 import util.UrlMatcher;
 
 import java.util.Arrays;
+import java.util.HashMap;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(value = {KikuyuController.class, F.Promise.class})
+@PrepareForTest(value = {KikuyuController.class, Controller.class, F.Promise.class})
 public class KikuyuControllerTest {
 
     private static final String TEST_PATH = "testPath";
@@ -54,26 +55,27 @@ public class KikuyuControllerTest {
     }
 
     @Test
-    public void testSiphon() throws Throwable {
+    public void testSiphon() throws Exception {
 
         final UrlMatcher urlMatcher = mock(UrlMatcher.class);
 
+        final Page page = new Page(Arrays.asList(new ComponentUrl(TEMPLATE_URL, false, true),
+                new ComponentUrl(COMPONENT_URL1, false, true), new ComponentUrl(COMPONENT_URL2, false, true)));
         final WS.WSRequestHolder templateRequestHolder = mock(WS.WSRequestHolder.class);
         final F.Promise<WS.Response> templateResponsePromise = mock(F.Promise.class);
         final WS.WSRequestHolder componentRequestHolder = mock(WS.WSRequestHolder.class);
         final F.Promise<WS.Response> componentResponsePromise = mock(F.Promise.class);
         final WS.WSRequestHolder componentRequestHolder2 = mock(WS.WSRequestHolder.class);
         final F.Promise<WS.Response> componentResponsePromise2 = mock(F.Promise.class);
+        final Http.Request mockRequest = mock(Http.Request.class);
 
         final Results.AsyncResult mockResult = mock(Results.AsyncResult.class);
         final ComposeClientResponseFunction outputFunction =
                 mock(ComposeClientResponseFunction.class);
-        final Http.Request request = mock(Http.Request.class);
 
 
         when(urlMappingsRetriever.getUrlMatcher()).thenReturn(urlMatcher);
-        when(urlMatcher.match(anyString())).thenReturn(new Page(Arrays.asList(new ComponentUrl(TEMPLATE_URL, false, true),
-                new ComponentUrl(COMPONENT_URL1, false, true), new ComponentUrl(COMPONENT_URL2, false, true))));
+        when(urlMatcher.match(anyString())).thenReturn(page);
 
         when(wrapper.url(TEMPLATE_URL)).thenReturn(templateRequestHolder);
         when(templateRequestHolder.get()).thenReturn(templateResponsePromise);
@@ -84,29 +86,33 @@ public class KikuyuControllerTest {
         when(wrapper.url(COMPONENT_URL2)).thenReturn(componentRequestHolder2);
         when(componentRequestHolder2.get()).thenReturn(componentResponsePromise2);
 
-        PowerMockito.mockStatic(Controller.class);
-        PowerMockito.when(Controller.request()).thenReturn(request);
-        when(request.method()).thenReturn("GET");
-
-        PowerMockito.spy(F.Promise.class);
-        F.Promise promisesSequence = mock(F.Promise.class);
-
-
-        PowerMockito.when(PowerMockito.method(F.Promise.class, "sequence", F.Promise[].class)).thenReturn(promisesSequence);
-        when(promisesSequence.map(any(F.Function.class))).thenReturn(mock(F.Promise.class));
+        PowerMockito.stub(PowerMockito.method(Controller.class, "request")).toReturn(mockRequest);
+        when(mockRequest.method()).thenReturn("GET");
+        HashMap headers = new HashMap();
+        headers.put("Content-Type", new String[]{"value"});
+        when(mockRequest.headers()).thenReturn(headers);
 
         PowerMockito.whenNew(ComposeClientResponseFunction.class).withAnyArguments().thenReturn(outputFunction);
-        PowerMockito.stub(PowerMockito.method(Results.class, "async")).toReturn(mockResult);
+        PowerMockito.stub(PowerMockito.method(F.Promise.class, "sequence", F.Promise[].class)).toReturn(mock(F.Promise.class));
 
+        PowerMockito.stub(PowerMockito.method(Results.class, "async")).toReturn(mockResult);
 
         Result result = kikuyuController.siphon(TEST_PATH);
 
         verify(wrapper).url(TEMPLATE_URL);
         verify(wrapper).url(COMPONENT_URL1);
+        verify(wrapper).url(COMPONENT_URL2);
+
         verify(templateRequestHolder).get();
+        verify(templateRequestHolder).setHeader("Content-Type", "value");
+
         verify(componentRequestHolder).get();
+        verify(componentRequestHolder).setHeader("Content-Type", "value");
+
         verify(componentRequestHolder2).get();
-        PowerMockito.verifyNew(ComposeClientResponseFunction.class).withArguments(responseComposer);
+        verify(componentRequestHolder2).setHeader("Content-Type", "value");
+
+        PowerMockito.verifyNew(ComposeClientResponseFunction.class).withArguments(responseComposer, page);
     }
 
 }
