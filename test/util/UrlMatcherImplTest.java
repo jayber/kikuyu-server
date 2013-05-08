@@ -27,33 +27,33 @@ public class UrlMatcherImplTest {
 
     @Test
     public void testWildcardMatch() throws Exception {
-        assertEquals(URL_FOR_WILD_CARD_MATCH, urlMatcher.match(NO_SPECIFIC_MATCH).getComponentUrls().get(0));
+        assertEquals(URL_FOR_WILD_CARD_MATCH, urlMatcher.match(NO_SPECIFIC_MATCH).getComponentUrls().get(0).getUrl());
     }
 
     @Test
     public void testBeforeWildcardMatch() throws Exception {
-        assertEquals("http://news.bbc.co.uk", urlMatcher.match("bbc").getComponentUrls().get(0));
+        assertEquals("http://news.bbc.co.uk", urlMatcher.match("bbc").getComponentUrls().get(0).getUrl());
     }
 
     @Test
     public void testNeedsSortingBeforeWildcardMatch() throws Exception {
-        assertEquals("http://uk.practicallaw.com", urlMatcher.match("page").getComponentUrls().get(0));
+        assertEquals("http://uk.practicallaw.com", urlMatcher.match("page").getComponentUrls().get(0).getUrl());
     }
 
     @Test
     public void testWildcardMatchBecauseOfOrder() throws Exception {
-        assertEquals("urlForWildCardMatch", urlMatcher.match("whippet").getComponentUrls().get(0));
+        assertEquals("urlForWildCardMatch", urlMatcher.match("whippet").getComponentUrls().get(0).getUrl());
     }
 
     @Test
     public void testMatchingGroup() throws Exception {
-        assertEquals("http://uk.practicallaw.com/page2", urlMatcher.match("page2").getComponentUrls().get(0));
-        assertEquals("http://component/page2", urlMatcher.match("page2").getComponentUrls().get(1));
+        assertEquals("http://uk.practicallaw.com/page2", urlMatcher.match("page2").getComponentUrls().get(0).getUrl());
+        assertEquals("http://component/page2", urlMatcher.match("page2").getComponentUrls().get(1).getUrl());
     }
 
     @Test
     public void testComponentUrl() throws Exception {
-        assertEquals("componentUrl", urlMatcher.match("bbc").getComponentUrls().get(1));
+        assertEquals("componentUrl", urlMatcher.match("bbc").getComponentUrls().get(1).getUrl());
     }
 
     @Test

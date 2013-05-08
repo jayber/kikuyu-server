@@ -6,6 +6,7 @@ import domain.Page;
 import play.libs.F;
 import play.libs.WS;
 import play.mvc.Controller;
+import play.mvc.Http;
 import play.mvc.Result;
 import util.ComposeClientResponseFunction;
 import util.ResponseComposer;
@@ -34,7 +35,7 @@ public class KikuyuController extends Controller {
     public Result siphon(String path) {
         final Page matchingPage = urlMappingsRetriever.getUrlMatcher().match(path);
 
-        F.Promise<WS.Response>[] promises = getPromisesForUrls(matchingPage.getComponentUrls());
+        F.Promise<WS.Response>[] promises = getPromisesForUrls(matchingPage.getComponentUrls(), request());
 
         F.Promise<List<WS.Response>> promisesSequence = F.Promise.sequence(promises);
         F.Promise<Result> resultPromise = promisesSequence.map(new ComposeClientResponseFunction(responseComposer, matchingPage));
@@ -42,7 +43,7 @@ public class KikuyuController extends Controller {
         return async(resultPromise);
     }
 
-    private F.Promise<WS.Response>[] getPromisesForUrls(List<ComponentUrl> componentUrls) {
+    private F.Promise<WS.Response>[] getPromisesForUrls(List<ComponentUrl> componentUrls, Http.Request request) {
         F.Promise<WS.Response>[] promises = new F.Promise[componentUrls.size()];
         for (int i = 0; i < componentUrls.size(); i++) {
             ComponentUrl componentUrl = componentUrls.get(i);
@@ -53,21 +54,31 @@ public class KikuyuController extends Controller {
 
             copyQueryParams(urlParts, urlHolder);
 
-            promises[i] = setMethod(componentUrl, urlHolder);
+            promises[i] = combineIncomingAndOutgoingRequests(componentUrl, urlHolder, request);
         }
         return promises;
     }
 
-    private F.Promise<WS.Response> setMethod(ComponentUrl componentUrl, WS.WSRequestHolder urlHolder) {
+    private F.Promise<WS.Response> combineIncomingAndOutgoingRequests(ComponentUrl componentUrl, WS.WSRequestHolder urlHolder, Http.Request request) {
         F.Promise<WS.Response> componentPromise;
-        if (request().method().equals(POST) && componentUrl.isAcceptPost()) {
-            final String postData = getPostData(request().body().asFormUrlEncoded());
-            urlHolder.setContentType(request().getHeader("Content-Type"));
+        copyHeaders(urlHolder, request);
+        if (request.method().equals(POST) && componentUrl.isAcceptPost()) {
+            final String postData = getPostData(request.body().asFormUrlEncoded());
             componentPromise = urlHolder.post(postData);
         } else {
-            componentPromise = urlHolder.execute(GET);
+            componentPromise = urlHolder.get();
         }
         return componentPromise;
+    }
+
+    private void copyHeaders(WS.WSRequestHolder urlHolder, Http.Request request) {
+        Map<String, String[]> headers = request.headers();
+        for (String key : headers.keySet()) {
+            String[] values = headers.get(key);
+            for (String value : values) {
+                urlHolder.setHeader(key, value);
+            }
+        }
     }
 
     private void copyQueryParams(String[] urlParts, WS.WSRequestHolder urlHolder) {
