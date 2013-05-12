@@ -11,12 +11,17 @@
                 {
                     "class": "kikuyu.domain.PageComponent",
                     "id": null,
-                    "url": "http://news.bbc.co.uk"
+                    "url": "http://news.bbc.co.uk",
+                    "substitutionVariables": {}
                 },
                 {
                     "class": "kikuyu.domain.PageComponent",
                     "id": null,
-                    "url": "componentUrl"
+                    "url": "componentUrl",
+                    "substitutionVariables": {
+                        "replaced": "i thought i put something here",
+                        "also": "this too"
+                    }
                 }
             ]
         },
@@ -35,12 +40,14 @@
                 {
                     "class": "kikuyu.domain.PageComponent",
                     "id": null,
-                    "url": "urlForWildCardMatch"
+                    "url": "urlForWildCardMatch",
+                    "substitutionVariables": {}
                 },
                 {
                     "class": "kikuyu.domain.PageComponent",
                     "id": null,
-                    "url": "http://localhost:8080/kikuyu/test/component"
+                    "url": "http://localhost:8080/kikuyu/test/component",
+                    "substitutionVariables": {}
                 }
             ]
         },
@@ -59,12 +66,14 @@
                 {
                     "class": "kikuyu.domain.PageComponent",
                     "id": null,
-                    "url": "http://uk.practicallaw.com"
+                    "url": "http://uk.practicallaw.com",
+                    "substitutionVariables": {}
                 },
                 {
                     "class": "kikuyu.domain.PageComponent",
                     "id": null,
-                    "url": "http://localhost:8080/kikuyu/test/component"
+                    "url": "http://localhost:8080/kikuyu/test/component",
+                    "substitutionVariables": {}
                 }
             ]
         },
@@ -83,12 +92,14 @@
                 {
                     "class": "kikuyu.domain.PageComponent",
                     "id": null,
-                    "url": "http://uk.practicallaw.com/page2"
+                    "url": "http://uk.practicallaw.com/page2",
+                    "substitutionVariables": {}
                 },
                 {
                     "class": "kikuyu.domain.PageComponent",
                     "id": null,
-                    "url": "http://component/page2"
+                    "url": "http://component/page2",
+                    "substitutionVariables": {}
                 }
             ]
         },
@@ -107,12 +118,14 @@
                 {
                     "class": "kikuyu.domain.PageComponent",
                     "id": null,
-                    "url": "http://localhost:8080/kikuyu/test/template"
+                    "url": "http://localhost:8080/kikuyu/test/template",
+                    "substitutionVariables": {}
                 },
                 {
                     "class": "kikuyu.domain.PageComponent",
                     "id": null,
-                    "url": "http://localhost:8080/kikuyu/test/component"
+                    "url": "http://localhost:8080/kikuyu/test/component",
+                    "substitutionVariables": {}
                 }
             ]
         },

@@ -3,12 +3,11 @@ package util;
 import domain.ComponentUrl;
 import domain.Page;
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 import play.Logger;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.io.IOException;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,7 +19,12 @@ public class UrlMatcherImpl implements UrlMatcher {
             final JsonNode pageComponents = urlMapping.path("page").path("pageComponents");
             List<ComponentUrl> componentUrls = new ArrayList();
             for (JsonNode pageComponent : pageComponents) {
-                componentUrls.add(new ComponentUrl(pageComponent.path("url").asText(), pageComponent.path("acceptPost").asBoolean(), true));
+                try {
+                    componentUrls.add(new ComponentUrl(pageComponent.path("url").asText(), pageComponent.path("acceptPost").asBoolean(),
+                            pageComponent.path("template").asBoolean(), new ObjectMapper().readValue(pageComponent.path("substitutionVariables"), Map.class)));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
             final PatternPage patternPage = new PatternPage(urlMapping.path("pattern").asText(),
                     urlMapping.path("matchOrder").asInt(), componentUrls);
@@ -54,7 +58,7 @@ public class UrlMatcherImpl implements UrlMatcher {
     private List<ComponentUrl> resolveUrlsFromExpressions(Matcher matcher, final List<ComponentUrl> urls) {
         ArrayList<ComponentUrl> results = new ArrayList<ComponentUrl>(urls.size());
         for (ComponentUrl componentUrl : urls) {
-            results.add(new ComponentUrl(componentUrl.getUrl().replace("{0}", matcher.group(0)), componentUrl.isAcceptPost(), true));
+            results.add(new ComponentUrl(componentUrl.getUrl().replace("{0}", matcher.group(0)), componentUrl.isAcceptPost(), componentUrl.isTemplate(), componentUrl.getSubstitutionVariables()));
         }
         return results;
     }

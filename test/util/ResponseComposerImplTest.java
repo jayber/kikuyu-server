@@ -5,6 +5,7 @@ import domain.Page;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
 
@@ -24,11 +25,11 @@ public class ResponseComposerImplTest {
         final ResponseComposerImpl responseComposer = new ResponseComposerImpl();
         ArrayList<ComponentUrl> componentUrls = new ArrayList<ComponentUrl>();
 
-        componentUrls.add(new ComponentUrl("comp1 url", false, true));
-        componentUrls.add(new ComponentUrl("comp2 url", false, true));
-        componentUrls.add(new ComponentUrl("comp3 url", false, false));
-        componentUrls.add(new ComponentUrl("comp4 url", false, false));
-        componentUrls.add(new ComponentUrl("comp5 url", false, false));
+        componentUrls.add(new ComponentUrl("comp1 url", false, true, new HashMap()));
+        componentUrls.add(new ComponentUrl("comp2 url", false, true, new HashMap()));
+        componentUrls.add(new ComponentUrl("comp3 url", false, false, new HashMap()));
+        componentUrls.add(new ComponentUrl("comp4 url", false, false, new HashMap()));
+        componentUrls.add(new ComponentUrl("comp5 url", false, false, new HashMap()));
 
         final String output = responseComposer.composeBody(new Page(componentUrls),
                 "before <div location> </div> middle <div location> </div> after",

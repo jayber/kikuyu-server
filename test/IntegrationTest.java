@@ -1,3 +1,4 @@
+import org.junit.Ignore;
 import org.junit.Test;
 import play.libs.F.Callback;
 import play.test.TestBrowser;
@@ -7,10 +8,7 @@ import static play.test.Helpers.*;
 
 public class IntegrationTest {
 
-    /**
-     * add your integration test here
-     * in this example we just check if the welcome page is being shown
-     */
+    @Ignore //todo: it would be good to have meaningful integration tests here
     @Test
     public void test() {
         running(testServer(3333, fakeApplication(inMemoryDatabase())), HTMLUNIT, new Callback<TestBrowser>() {

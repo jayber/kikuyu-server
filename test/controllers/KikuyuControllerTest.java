@@ -59,8 +59,8 @@ public class KikuyuControllerTest {
 
         final UrlMatcher urlMatcher = mock(UrlMatcher.class);
 
-        final Page page = new Page(Arrays.asList(new ComponentUrl(TEMPLATE_URL, false, true),
-                new ComponentUrl(COMPONENT_URL1, false, true), new ComponentUrl(COMPONENT_URL2, false, true)));
+        final Page page = new Page(Arrays.asList(new ComponentUrl(TEMPLATE_URL, false, true, new HashMap()),
+                new ComponentUrl(COMPONENT_URL1, false, true, new HashMap()), new ComponentUrl(COMPONENT_URL2, false, true, new HashMap())));
         final WS.WSRequestHolder templateRequestHolder = mock(WS.WSRequestHolder.class);
         final F.Promise<WS.Response> templateResponsePromise = mock(F.Promise.class);
         final WS.WSRequestHolder componentRequestHolder = mock(WS.WSRequestHolder.class);
