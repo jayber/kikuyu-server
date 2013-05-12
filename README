@@ -36,6 +36,9 @@ between command windows.
 
 You can probably get something better going using JVM proxy arguments (e.g. -Dhttp_proxy ?)
 
+Install the Play 2.0 Plugin (this is not just the ordinary Play plugin, you need to search for it by connecting to the
+IntelliJ plugin repository)
+
 IntelliJ Dependencies
 #####################
 
@@ -46,4 +49,3 @@ You should go to a command window in your project directory and run:
 play "idea with-sources=yes"
 
 which will update your IntelliJ project.
-This file was modified by IntelliJ IDEA 12.1.1 for binding GitHub repository
