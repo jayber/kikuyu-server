@@ -19,26 +19,25 @@ public class ResponseComposerImpl implements ResponseComposer {
         final List<String> bodyList = Arrays.asList(bodies);
         final List<ComponentUrl> componentUrls = page.getComponentUrls();
 
-        return getFilledComponents(bodyList, componentUrls).get(0);
+        return mergeTemplates(bodyList, componentUrls).get(0);
     }
 
-    private List<String> getFilledComponents(List<String> bodyList, List<ComponentUrl> componentUrls) {
+    private List<String> mergeTemplates(List<String> bodyList, List<ComponentUrl> componentUrls) {
         ComponentUrl componentUrl = componentUrls.get(0);
+        String substitutedText = substituteVariableValues(bodyList.get(0), componentUrl);
         if (bodyList.size() > 1) {
             if (componentUrl.isTemplate()) {
-                String templateText = bodyList.get(0);
-                templateText = substituteVariables(templateText, componentUrl);
-                return doSlotReplace(templateText, getFilledComponents(bodyList.subList(1, bodyList.size()), componentUrls.subList(1, componentUrls.size())));
+                return doSlotReplace(substitutedText, mergeTemplates(bodyList.subList(1, bodyList.size()), componentUrls.subList(1, componentUrls.size())));
             } else {
                 final List<String> subList = new ArrayList<>();
-                subList.add(substituteVariables(bodyList.get(0), componentUrl));
-                final List<String> filledComponents = getFilledComponents(bodyList.subList(1, bodyList.size()), componentUrls.subList(1, componentUrls.size()));
+                subList.add(substitutedText);
+                final List<String> filledComponents = mergeTemplates(bodyList.subList(1, bodyList.size()), componentUrls.subList(1, componentUrls.size()));
                 subList.addAll(filledComponents);
                 return subList;
             }
         }
         final ArrayList<String> rtnVal = new ArrayList<>();
-        rtnVal.add(substituteVariables(bodyList.get(0), componentUrl));
+        rtnVal.add(substitutedText);
         return rtnVal;
     }
 
@@ -61,7 +60,7 @@ public class ResponseComposerImpl implements ResponseComposer {
         return returnBodies;
     }
 
-    private String substituteVariables(String templateText, ComponentUrl componentUrl) {
+    private String substituteVariableValues(String templateText, ComponentUrl componentUrl) {
         final Map<String, String> substitutionVariables = componentUrl.getSubstitutionVariables();
 
         final Matcher matcher = SUBSTITUTION_VARIABLE_PATTERN.matcher(templateText);
