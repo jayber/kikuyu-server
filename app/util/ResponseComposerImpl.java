@@ -1,7 +1,7 @@
 package util;
 
-import domain.ComponentUrl;
 import domain.Page;
+import domain.PageComponent;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,21 +17,21 @@ public class ResponseComposerImpl implements ResponseComposer {
     @Override
     public String composeBody(Page page, String... bodies) {
         final List<String> bodyList = Arrays.asList(bodies);
-        final List<ComponentUrl> componentUrls = page.getComponentUrls();
+        final List<PageComponent> pageComponents = page.getPageComponents();
 
-        return mergeTemplates(bodyList, componentUrls).get(0);
+        return mergeTemplates(bodyList, pageComponents).get(0);
     }
 
-    private List<String> mergeTemplates(List<String> bodyList, List<ComponentUrl> componentUrls) {
-        ComponentUrl componentUrl = componentUrls.get(0);
-        String substitutedText = substituteVariableValues(bodyList.get(0), componentUrl);
+    private List<String> mergeTemplates(List<String> bodyList, List<PageComponent> pageComponents) {
+        PageComponent pageComponent = pageComponents.get(0);
+        String substitutedText = substituteVariableValues(bodyList.get(0), pageComponent);
         if (bodyList.size() > 1) {
-            if (componentUrl.isTemplate()) {
-                return doSlotReplace(substitutedText, mergeTemplates(bodyList.subList(1, bodyList.size()), componentUrls.subList(1, componentUrls.size())));
+            if (pageComponent.isTemplate()) {
+                return doSlotReplace(substitutedText, mergeTemplates(bodyList.subList(1, bodyList.size()), pageComponents.subList(1, pageComponents.size())));
             } else {
                 final List<String> subList = new ArrayList<>();
                 subList.add(substitutedText);
-                final List<String> filledComponents = mergeTemplates(bodyList.subList(1, bodyList.size()), componentUrls.subList(1, componentUrls.size()));
+                final List<String> filledComponents = mergeTemplates(bodyList.subList(1, bodyList.size()), pageComponents.subList(1, pageComponents.size()));
                 subList.addAll(filledComponents);
                 return subList;
             }
@@ -60,8 +60,8 @@ public class ResponseComposerImpl implements ResponseComposer {
         return returnBodies;
     }
 
-    private String substituteVariableValues(String templateText, ComponentUrl componentUrl) {
-        final Map<String, String> substitutionVariables = componentUrl.getSubstitutionVariables();
+    private String substituteVariableValues(String templateText, PageComponent pageComponent) {
+        final Map<String, String> substitutionVariables = pageComponent.getSubstitutionVariables();
 
         final Matcher matcher = SUBSTITUTION_VARIABLE_PATTERN.matcher(templateText);
 

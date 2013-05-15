@@ -1,20 +1,20 @@
 package util;
 
-import domain.ComponentUrl;
 import domain.Page;
+import domain.PageComponent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class TestFixtures {
 
-    public static final ArrayList<ComponentUrl> componentUrls = new ArrayList<ComponentUrl>();
+    public static final ArrayList<PageComponent> PAGE_COMPONENTs = new ArrayList<PageComponent>();
 
     static {
-        componentUrls.add(new ComponentUrl("comp1 url", false, true, new HashMap()));
-        componentUrls.add(new ComponentUrl("comp2 url", false, false, new HashMap()));
-        componentUrls.add(new ComponentUrl("comp3 url", false, false, new HashMap()));
+        PAGE_COMPONENTs.add(new PageComponent("comp1 url", false, true, new HashMap()));
+        PAGE_COMPONENTs.add(new PageComponent("comp2 url", false, false, new HashMap()));
+        PAGE_COMPONENTs.add(new PageComponent("comp3 url", false, false, new HashMap()));
     }
 
-    public static final Page page = new Page(componentUrls);
+    public static final Page page = new Page(PAGE_COMPONENTs);
 }

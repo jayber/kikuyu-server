@@ -1,8 +1,8 @@
 package controllers;
 
 import controllers.ws.WSWrapper;
-import domain.ComponentUrl;
 import domain.Page;
+import domain.PageComponent;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,10 +17,7 @@ import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
 import play.mvc.Results;
-import util.ComposeClientResponseFunction;
-import util.ResponseComposer;
-import util.UrlMappingsRetriever;
-import util.UrlMatcher;
+import util.*;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,6 +40,8 @@ public class KikuyuControllerTest {
     private UrlMappingsRetriever urlMappingsRetriever;
     @Mock
     private ResponseComposer responseComposer;
+    @Mock
+    private ComponentRequestPromiseFactory requestPromiseFactory;
 
     private KikuyuController kikuyuController = new KikuyuController();
 
@@ -52,6 +51,7 @@ public class KikuyuControllerTest {
         kikuyuController.setWsWrapper(wrapper);
         kikuyuController.setUrlMappingsRetriever(urlMappingsRetriever);
         kikuyuController.setResponseComposer(responseComposer);
+        kikuyuController.setRequestPromiseFactory(requestPromiseFactory);
     }
 
     @Test
@@ -59,8 +59,11 @@ public class KikuyuControllerTest {
 
         final UrlMatcher urlMatcher = mock(UrlMatcher.class);
 
-        final Page page = new Page(Arrays.asList(new ComponentUrl(TEMPLATE_URL, false, true, new HashMap()),
-                new ComponentUrl(COMPONENT_URL1, false, true, new HashMap()), new ComponentUrl(COMPONENT_URL2, false, true, new HashMap())));
+        PageComponent pageComponent = new PageComponent(TEMPLATE_URL, false, true, new HashMap());
+        PageComponent pageComponent1 = new PageComponent(COMPONENT_URL1, false, true, new HashMap());
+        PageComponent pageComponent2 = new PageComponent(COMPONENT_URL2, false, true, new HashMap());
+        final Page page = new Page(Arrays.asList(pageComponent,
+                pageComponent1, pageComponent2));
         final WS.WSRequestHolder templateRequestHolder = mock(WS.WSRequestHolder.class);
         final F.Promise<WS.Response> templateResponsePromise = mock(F.Promise.class);
         final WS.WSRequestHolder componentRequestHolder = mock(WS.WSRequestHolder.class);
@@ -72,7 +75,6 @@ public class KikuyuControllerTest {
         final Results.AsyncResult mockResult = mock(Results.AsyncResult.class);
         final ComposeClientResponseFunction outputFunction =
                 mock(ComposeClientResponseFunction.class);
-
 
         when(urlMappingsRetriever.getUrlMatcher()).thenReturn(urlMatcher);
         when(urlMatcher.match(anyString())).thenReturn(page);
@@ -87,10 +89,6 @@ public class KikuyuControllerTest {
         when(componentRequestHolder2.get()).thenReturn(componentResponsePromise2);
 
         PowerMockito.stub(PowerMockito.method(Controller.class, "request")).toReturn(mockRequest);
-        when(mockRequest.method()).thenReturn("GET");
-        HashMap headers = new HashMap();
-        headers.put("Content-Type", new String[]{"value"});
-        when(mockRequest.headers()).thenReturn(headers);
 
         PowerMockito.whenNew(ComposeClientResponseFunction.class).withAnyArguments().thenReturn(outputFunction);
         PowerMockito.stub(PowerMockito.method(F.Promise.class, "sequence", F.Promise[].class)).toReturn(mock(F.Promise.class));
@@ -103,15 +101,9 @@ public class KikuyuControllerTest {
         verify(wrapper).url(COMPONENT_URL1);
         verify(wrapper).url(COMPONENT_URL2);
 
-        verify(templateRequestHolder).get();
-        verify(templateRequestHolder).setHeader("Content-Type", "value");
-
-        verify(componentRequestHolder).get();
-        verify(componentRequestHolder).setHeader("Content-Type", "value");
-
-        verify(componentRequestHolder2).get();
-        verify(componentRequestHolder2).setHeader("Content-Type", "value");
-
+        verify(requestPromiseFactory).setRequestParams(new String[]{TEMPLATE_URL}, templateRequestHolder);
+        verify(requestPromiseFactory).setRequestParams(new String[]{COMPONENT_URL1}, componentRequestHolder);
+        verify(requestPromiseFactory).setRequestParams(new String[]{COMPONENT_URL2}, componentRequestHolder2);
         PowerMockito.verifyNew(ComposeClientResponseFunction.class).withArguments(responseComposer, page);
     }
 

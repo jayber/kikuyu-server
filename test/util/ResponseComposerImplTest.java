@@ -1,7 +1,7 @@
 package util;
 
-import domain.ComponentUrl;
 import domain.Page;
+import domain.PageComponent;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -23,15 +23,15 @@ public class ResponseComposerImplTest {
     @Test
     public void testComposeBody2Templates() throws Exception {
         final ResponseComposerImpl responseComposer = new ResponseComposerImpl();
-        ArrayList<ComponentUrl> componentUrls = new ArrayList<ComponentUrl>();
+        ArrayList<PageComponent> pageComponents = new ArrayList<PageComponent>();
 
-        componentUrls.add(new ComponentUrl("comp1 url", false, true, new HashMap()));
-        componentUrls.add(new ComponentUrl("comp2 url", false, true, new HashMap()));
-        componentUrls.add(new ComponentUrl("comp3 url", false, false, new HashMap()));
-        componentUrls.add(new ComponentUrl("comp4 url", false, false, new HashMap()));
-        componentUrls.add(new ComponentUrl("comp5 url", false, false, new HashMap()));
+        pageComponents.add(new PageComponent("comp1 url", false, true, new HashMap()));
+        pageComponents.add(new PageComponent("comp2 url", false, true, new HashMap()));
+        pageComponents.add(new PageComponent("comp3 url", false, false, new HashMap()));
+        pageComponents.add(new PageComponent("comp4 url", false, false, new HashMap()));
+        pageComponents.add(new PageComponent("comp5 url", false, false, new HashMap()));
 
-        final String output = responseComposer.composeBody(new Page(componentUrls),
+        final String output = responseComposer.composeBody(new Page(pageComponents),
                 "before <div location> </div> middle <div location> </div> after",
                 "before2 <div location> </div> middle2 <div location> </div> after2",
                 "component3",

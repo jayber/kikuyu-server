@@ -16,6 +16,9 @@
         <property name="responseComposer">
             <bean class="util.ResponseComposerImpl"/>
         </property>
+        <property name="requestPromiseFactory">
+            <bean class="util.ComponentRequestPromiseFactoryImpl"/>
+        </property>
     </bean>
 
 </beans>
