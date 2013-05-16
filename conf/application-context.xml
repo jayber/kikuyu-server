@@ -8,17 +8,18 @@
         <property name="reloadUrlMappingsFreqSecs" value="60"/>
     </bean>
 
-    <bean id="kikuyuController" class="controllers.KikuyuController">
+    <bean id="responsePromiseFactory" class="util.ComponentResponsePromiseFactoryImpl">
         <property name="wsWrapper">
             <bean class="controllers.ws.WSWrapperImpl"/>
         </property>
+    </bean>
+
+    <bean id="kikuyuController" class="controllers.KikuyuController">
         <property name="urlMappingsRetriever" ref="urlMappingsRetriever"/>
         <property name="responseComposer">
             <bean class="util.ResponseComposerImpl"/>
         </property>
-        <property name="requestPromiseFactory">
-            <bean class="util.ComponentRequestPromiseFactoryImpl"/>
-        </property>
+        <property name="responsePromiseFactory" ref="responsePromiseFactory"/>
     </bean>
 
 </beans>

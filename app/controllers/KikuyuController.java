@@ -1,6 +1,5 @@
 package controllers;
 
-import controllers.ws.WSWrapper;
 import domain.Page;
 import domain.PageComponent;
 import play.libs.F;
@@ -8,7 +7,7 @@ import play.libs.WS;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
-import util.ComponentRequestPromiseFactory;
+import util.ComponentResponsePromiseFactory;
 import util.ComposeClientResponseFunction;
 import util.ResponseComposer;
 import util.UrlMappingsRetriever;
@@ -18,9 +17,8 @@ import java.util.List;
 public class KikuyuController extends Controller {
 
     private UrlMappingsRetriever urlMappingsRetriever;
-    private WSWrapper wsWrapper;
     private ResponseComposer responseComposer;
-    private ComponentRequestPromiseFactory requestPromiseFactory;
+    private ComponentResponsePromiseFactory responsePromiseFactory;
 
     //todo: record each request that is mapped to a url and show in urlmappings number of requests in last month, so can delete mappings that aren't being used
     //todo: copy headers (e.g. cookies) from original request into sub requests and then from responses
@@ -40,25 +38,12 @@ public class KikuyuController extends Controller {
         for (int i = 0; i < pageComponents.size(); i++) {
             PageComponent pageComponent = pageComponents.get(i);
 
-            final String[] urlParts = splitUrl(pageComponent.getUrl());
+            F.Promise<WS.Response> responsePromise = responsePromiseFactory.getResponsePromise(request, pageComponent);
 
-            final WS.WSRequestHolder urlHolder = wsWrapper.url(urlParts[0]);
+            promises[i] = responsePromise;
 
-            requestPromiseFactory.setRequestParams(urlParts, urlHolder);
-
-            requestPromiseFactory.copyRequestHeaders(urlHolder, request);
-
-            promises[i] = requestPromiseFactory.copyMethodAndBody(pageComponent, urlHolder, request);
         }
         return promises;
-    }
-
-    private String[] splitUrl(String componentUrl) {
-        return componentUrl.split("[\\?&=]");
-    }
-
-    public void setWsWrapper(WSWrapper wsWrapper) {
-        this.wsWrapper = wsWrapper;
     }
 
     public void setUrlMappingsRetriever(UrlMappingsRetriever urlMappingsRetriever) {
@@ -69,7 +54,7 @@ public class KikuyuController extends Controller {
         this.responseComposer = responseComposer;
     }
 
-    public void setRequestPromiseFactory(ComponentRequestPromiseFactory requestPromiseFactory) {
-        this.requestPromiseFactory = requestPromiseFactory;
+    public void setResponsePromiseFactory(ComponentResponsePromiseFactory responsePromiseFactory) {
+        this.responsePromiseFactory = responsePromiseFactory;
     }
 }

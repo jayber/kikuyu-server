@@ -19,6 +19,7 @@ public class ResponseComposerImpl implements ResponseComposer {
         final List<String> bodyList = Arrays.asList(bodies);
         final List<PageComponent> pageComponents = page.getPageComponents();
 
+        //todo: this should actually concatenate responses if there are > 1
         return mergeTemplates(bodyList, pageComponents).get(0);
     }
 

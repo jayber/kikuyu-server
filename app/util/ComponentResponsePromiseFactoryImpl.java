@@ -1,5 +1,6 @@
 package util;
 
+import controllers.ws.WSWrapper;
 import domain.PageComponent;
 import play.libs.F;
 import play.libs.WS;
@@ -10,11 +11,12 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Map;
 
-public class ComponentRequestPromiseFactoryImpl implements ComponentRequestPromiseFactory {
+public class ComponentResponsePromiseFactoryImpl implements ComponentResponsePromiseFactory {
 
+    private WSWrapper wsWrapper;
     private static final String POST = "POST";
 
-    public F.Promise<WS.Response> copyMethodAndBody(PageComponent pageComponent, WS.WSRequestHolder urlHolder, Http.Request request) {
+    private F.Promise<WS.Response> copyMethodAndBody(PageComponent pageComponent, WS.WSRequestHolder urlHolder, Http.Request request) {
         F.Promise<WS.Response> componentPromise;
         if (request.method().equals(POST) && pageComponent.isAcceptPost()) {
             final String postData = getPostData(request.body().asFormUrlEncoded());
@@ -25,8 +27,9 @@ public class ComponentRequestPromiseFactoryImpl implements ComponentRequestPromi
         return componentPromise;
     }
 
-    public void copyRequestHeaders(WS.WSRequestHolder urlHolder, Http.Request request) {
+    private void copyRequestHeaders(WS.WSRequestHolder urlHolder, Http.Request request) {
         //todo: copying all headers causes problems, so just copying Content-Type and Cookie for now
+        //this is probably to do with Accept-Encoding causing response to be compressed, breaking something else
         String[] headerNames = new String[]{"Content-Type", "Cookie"};
         Map<String, String[]> headers = request.headers();
         for (String key : headerNames) {
@@ -39,17 +42,16 @@ public class ComponentRequestPromiseFactoryImpl implements ComponentRequestPromi
         }
     }
 
-    public void setRequestParams(String[] urlParts, WS.WSRequestHolder urlHolder) {
-        for (int j = 1; j < urlParts.length; j++) {
-            String name = urlParts[j];
-            if (urlParts.length > j + 1) {
+    private void setRequestParams(UriSplit urlParts, WS.WSRequestHolder urlHolder) {
+        for (String[] query : urlParts.getParams()) {
+            if (query.length > 1) {
                 try {
-                    urlHolder.setQueryParameter(name, URLDecoder.decode(urlParts[++j], "UTF-8"));
+                    urlHolder.setQueryParameter(query[0], URLDecoder.decode(query[1], "UTF-8"));
                 } catch (UnsupportedEncodingException e) {
                     throw new RuntimeException(e);
                 }
             } else {
-                urlHolder.setQueryParameter(name, "");
+                urlHolder.setQueryParameter(query[0], null);
             }
         }
     }
@@ -68,5 +70,27 @@ public class ComponentRequestPromiseFactoryImpl implements ComponentRequestPromi
             }
         }
         return sb.toString();
+    }
+
+    private UriSplit splitUrl(String componentUrl) {
+        return new UriSplit(componentUrl);
+    }
+
+    @Override
+    public F.Promise<WS.Response> getResponsePromise(Http.Request request, PageComponent pageComponent) {
+
+        final UriSplit urlParts = splitUrl(pageComponent.getUrl());
+
+        final WS.WSRequestHolder urlHolder = wsWrapper.url(urlParts.getUri());
+
+        this.setRequestParams(urlParts, urlHolder);
+
+        this.copyRequestHeaders(urlHolder, request);
+
+        return this.copyMethodAndBody(pageComponent, urlHolder, request);
+    }
+
+    public void setWsWrapper(WSWrapper wsWrapper) {
+        this.wsWrapper = wsWrapper;
     }
 }
