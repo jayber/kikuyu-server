@@ -40,4 +40,20 @@ public class ResponseComposerImplTest {
 
         assertEquals("before before2 component3 middle2 component4 after2 middle component5 after", output);
     }
+
+    @Test
+    public void testSubstitutionVariables() throws Exception {
+        final HashMap substitutionVariables = new HashMap();
+        substitutionVariables.put("var1", "value1");
+        substitutionVariables.put("var2", "value2");
+        final PageComponent pageComponent = new PageComponent("comp1 url", false, false, substitutionVariables);
+        final ArrayList<PageComponent> pageComponents = new ArrayList<>();
+        pageComponents.add(pageComponent);
+
+        final ResponseComposerImpl responseComposer = new ResponseComposerImpl();
+        final String output = responseComposer.composeBody(new Page(pageComponents), "before #{var1} middle #{var2} after #{var3}");
+
+        assertEquals("before value1 middle value2 after ", output);
+
+    }
 }

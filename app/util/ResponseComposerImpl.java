@@ -70,7 +70,11 @@ public class ResponseComposerImpl implements ResponseComposer {
         while (matcher.find()) {
             final String group = matcher.group(1);
             final String value = substitutionVariables.get(group);
-            matcher.appendReplacement(sb, value);
+            if (value != null) {
+                matcher.appendReplacement(sb, value);
+            } else {
+                matcher.appendReplacement(sb, "");
+            }
         }
         matcher.appendTail(sb);
 
