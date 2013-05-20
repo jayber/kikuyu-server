@@ -43,7 +43,7 @@ public class ResponseComposerImplTest {
 
     @Test
     public void testSubstitutionVariables() throws Exception {
-        final HashMap substitutionVariables = new HashMap();
+        final HashMap<String, String> substitutionVariables = new HashMap<>();
         substitutionVariables.put("var1", "value1");
         substitutionVariables.put("var2", "value2");
         final PageComponent pageComponent = new PageComponent("comp1 url", false, false, substitutionVariables);
