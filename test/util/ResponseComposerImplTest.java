@@ -54,6 +54,5 @@ public class ResponseComposerImplTest {
         final String output = responseComposer.composeBody(new Page(pageComponents), "before #{var1} middle #{var2} after #{var3}");
 
         assertEquals("before value1 middle value2 after ", output);
-
     }
 }
