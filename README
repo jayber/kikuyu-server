@@ -49,3 +49,18 @@ You should go to a command window in your project directory and run:
 play "idea with-sources=yes"
 
 which will update your IntelliJ project.
+
+Running
+#######
+You'll need to add the  -DconfigServerContext=servname:port/context JVM arg when you start the app.
+In dev this will be the "run" command in the play console, or the "Play 2" run configuration within IntelliJ
+(use the environment properties box to add the arg)
+
+Server starting commands
+#########################
+to setup java:
+. /apps1/releases/ant-setup.sh
+set permissions:
+chmod 755 start
+run:
+./start -DconfigServerContext=localhost:9001

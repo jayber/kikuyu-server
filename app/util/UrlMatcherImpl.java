@@ -27,13 +27,13 @@ public class UrlMatcherImpl implements UrlMatcher {
                 }
             }
             final PatternPage patternPage = new PatternPage(urlMapping.path("pattern").asText(),
-                    urlMapping.path("matchOrder").asInt(), componentUrls);
+                    urlMapping.path("matchOrder").asInt(), urlMapping.path("page").path("name").asText(), componentUrls);
             patterns.add(patternPage);
         }
         Collections.sort(patterns, new Comparator<PatternPage>() {
             @Override
             public int compare(PatternPage patternPage1, PatternPage patternPage2) {
-                return Integer.compare(patternPage1.matchOrder, patternPage2.matchOrder);
+                return patternPage1.matchOrder - patternPage2.matchOrder;
             }
         });
     }
@@ -43,7 +43,7 @@ public class UrlMatcherImpl implements UrlMatcher {
         for (PatternPage patternPage : patterns) {
             final Matcher matcher = patternPage.pattern.matcher(path);
             if (matcher.matches()) {
-                Logger.debug("Path: " + path + " matches pattern: " + patternPage.pattern.pattern() + ". " + patternPage.urls);
+                Logger.debug("Path: " + path + " matches pattern: " + patternPage.pattern.pattern() + " - page: " + patternPage.name);
                 return createPage(patternPage, matcher);
             }
         }
@@ -66,10 +66,12 @@ public class UrlMatcherImpl implements UrlMatcher {
     private class PatternPage {
         private final Pattern pattern;
         private int matchOrder;
+        private String name;
         private final List<PageComponent> urls;
 
-        public PatternPage(String pattern, int matchOrder, List<PageComponent> urls) {
+        public PatternPage(String pattern, int matchOrder, String name, List<PageComponent> urls) {
             this.matchOrder = matchOrder;
+            this.name = name;
             this.pattern = Pattern.compile(pattern);
             this.urls = urls;
         }

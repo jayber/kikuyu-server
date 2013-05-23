@@ -19,54 +19,84 @@ public class ResponseComposerImpl implements ResponseComposer {
         final List<String> bodyList = Arrays.asList(bodies);
         final List<PageComponent> pageComponents = page.getPageComponents();
 
-        //todo: this should actually concatenate responses if there are > 1
-        return mergeTemplates(bodyList, pageComponents).get(0);
+        List<String> resultsOfMerge = mergeTemplates(bodyList, pageComponents);
+        return concatenateStrings(resultsOfMerge);
     }
 
+    private String concatenateStrings(List<String> values) {
+        StringBuilder sb = new StringBuilder();
+        for (String value : values) {
+            sb.append(value);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * @param bodyList       = the Strings containing the response bodies making up templates and components
+     * @param pageComponents = the PageComponents that contain the values for substitution into vars
+     * @return the bodies with all the slots filled with component text and variables substituted
+     */
     private List<String> mergeTemplates(List<String> bodyList, List<PageComponent> pageComponents) {
         PageComponent pageComponent = pageComponents.get(0);
         String substitutedText = substituteVariableValues(bodyList.get(0), pageComponent);
-        if (bodyList.size() > 1) {
+        List<String> mergedComponents;
+        //recursion termination condition
+        if (bodyList.size() == 1) {
+            mergedComponents = singleEntryList(substitutedText);
+        } else {
+            final List<String> remainingBodies = bodyList.subList(1, bodyList.size());
+            final List<PageComponent> remainingPageComponents = pageComponents.subList(1, pageComponents.size());
+            //recursion
+            final List<String> nextComponentsMerged = mergeTemplates(remainingBodies, remainingPageComponents);
+
             if (pageComponent.isTemplate()) {
-                return doSlotReplace(substitutedText, mergeTemplates(bodyList.subList(1, bodyList.size()), pageComponents.subList(1, pageComponents.size())));
+                mergedComponents = mergeTemplateWithUnusedComponentBodies(substitutedText, nextComponentsMerged);
             } else {
-                final List<String> subList = new ArrayList<>();
-                subList.add(substitutedText);
-                final List<String> filledComponents = mergeTemplates(bodyList.subList(1, bodyList.size()), pageComponents.subList(1, pageComponents.size()));
-                subList.addAll(filledComponents);
-                return subList;
+                mergedComponents = singleEntryList(substitutedText);
+                mergedComponents.addAll(nextComponentsMerged);
             }
         }
-        final ArrayList<String> rtnVal = new ArrayList<>();
+        return mergedComponents;
+    }
+
+    private ArrayList<String> singleEntryList(String substitutedText) {
+        ArrayList<String> rtnVal;
+        rtnVal = new ArrayList<String>();
         rtnVal.add(substitutedText);
         return rtnVal;
     }
 
-    private List<String> doSlotReplace(String templateText, List<String> bodies) {
-        final Matcher matcher = SLOT_PATTERN.matcher(templateText);
-
+    private List<String> mergeTemplateWithUnusedComponentBodies(String templateText, List<String> bodies) {
         StringBuffer sb = new StringBuffer();
+        int unusedBodyIndex = searchAndReplaceSlotsWithComponentBodies(templateText, bodies, sb);
+        String mergedText = sb.toString();
+        return attachUnusedComponentBodies(bodies, unusedBodyIndex, mergedText);
+    }
+
+    private List<String> attachUnusedComponentBodies(List<String> bodies, int nextBodyIndex, String mergedText) {
+        final List<String> returnBodies = new ArrayList<String>();
+        returnBodies.add(mergedText);
+        if (nextBodyIndex < bodies.size()) {
+            returnBodies.addAll(bodies.subList(nextBodyIndex, bodies.size()));
+        }
+        return returnBodies;
+    }
+
+    private int searchAndReplaceSlotsWithComponentBodies(String templateText, List<String> bodies, StringBuffer sb) {
+        final Matcher matcher = SLOT_PATTERN.matcher(templateText);
         int i = 0;
         while (matcher.find()) {
             String body = bodies.get(i++);
             matcher.appendReplacement(sb, body);
         }
         matcher.appendTail(sb);
-
-        final List<String> returnBodies = new ArrayList<>();
-        returnBodies.add(sb.toString());
-        if (i < bodies.size()) {
-            returnBodies.addAll(bodies.subList(i, bodies.size()));
-        }
-        return returnBodies;
+        return i;
     }
 
     private String substituteVariableValues(String templateText, PageComponent pageComponent) {
         final Map<String, String> substitutionVariables = pageComponent.getSubstitutionVariables();
-
         final Matcher matcher = SUBSTITUTION_VARIABLE_PATTERN.matcher(templateText);
-
-        StringBuffer sb = new StringBuffer();
+        final StringBuffer sb = new StringBuffer();
         while (matcher.find()) {
             final String group = matcher.group(1);
             final String value = substitutionVariables.get(group);
@@ -77,7 +107,6 @@ public class ResponseComposerImpl implements ResponseComposer {
             }
         }
         matcher.appendTail(sb);
-
         return sb.toString();
     }
 }

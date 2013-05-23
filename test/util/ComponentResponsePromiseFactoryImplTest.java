@@ -41,17 +41,17 @@ public class ComponentResponsePromiseFactoryImplTest {
         responsePromiseFactory = new ComponentResponsePromiseFactoryImpl();
         responsePromiseFactory.setWsWrapper(wrapper);
 
-        when(wrapper.url(anyString())).thenReturn(templateRequestHolder);
         when(templateRequestHolder.get()).thenReturn(templateResponsePromise);
     }
 
     @Test
     public void testPostWithAcceptPostNoBody() throws Exception {
+        when(wrapper.url(anyString())).thenReturn(templateRequestHolder);
         templatePageComponent = new PageComponent(TEMPLATE_URL, true, true, new HashMap());
         final Http.RequestBody requestBody = mock(Http.RequestBody.class);
         when(mockRequest.method()).thenReturn("POST");
         when(mockRequest.body()).thenReturn(requestBody);
-        HashMap<String, String[]> formValues = new HashMap<>();
+        HashMap<String, String[]> formValues = new HashMap<String, String[]>();
         when(requestBody.asFormUrlEncoded()).thenReturn(formValues);
 
         F.Promise<WS.Response> responsePromise = responsePromiseFactory.getResponsePromise(mockRequest, templatePageComponent);
@@ -62,11 +62,12 @@ public class ComponentResponsePromiseFactoryImplTest {
 
     @Test
     public void testPostWithAcceptPost() throws Exception {
+        when(wrapper.url(anyString())).thenReturn(templateRequestHolder);
         templatePageComponent = new PageComponent(TEMPLATE_URL, true, true, new HashMap());
         final Http.RequestBody requestBody = mock(Http.RequestBody.class);
         when(mockRequest.method()).thenReturn("POST");
         when(mockRequest.body()).thenReturn(requestBody);
-        HashMap<String, String[]> formValues = new HashMap<>();
+        HashMap<String, String[]> formValues = new HashMap<String, String[]>();
         formValues.put("body", new String[]{"test"});
         formValues.put("body2", new String[]{"test2"});
         when(requestBody.asFormUrlEncoded()).thenReturn(formValues);
@@ -79,6 +80,7 @@ public class ComponentResponsePromiseFactoryImplTest {
 
     @Test
     public void testPostWithoutAcceptPostFlag() throws Exception {
+        when(wrapper.url(anyString())).thenReturn(templateRequestHolder);
         templatePageComponent = new PageComponent(TEMPLATE_URL, false, true, new HashMap());
         when(mockRequest.method()).thenReturn("POST");
 
@@ -90,6 +92,7 @@ public class ComponentResponsePromiseFactoryImplTest {
 
     @Test
     public void testPlainGetWithHeaders() throws Exception {
+        when(wrapper.url(anyString())).thenReturn(templateRequestHolder);
         templatePageComponent = new PageComponent(TEMPLATE_URL, false, true, new HashMap());
         HashMap headers = new HashMap();
         headers.put("Content-Type", new String[]{"value"});
@@ -108,16 +111,18 @@ public class ComponentResponsePromiseFactoryImplTest {
 
     @Test
     public void testUrlGetWithQueryParams() throws Exception {
-        String uri = "http://" + TEMPLATE_URL + ".com/?param1=value1&param2&param3=value3";
+        String uri = "http://" + TEMPLATE_URL + ".com/?param1=value1&{params}&param2&param3=value3";
+        String requestParams = "rparam1=rval1&rparam2=rval2";
+        String componentRequestUri = "http://" + TEMPLATE_URL + ".com/?param1=value1&" + requestParams + "&param2&param3=value3";
+        when(wrapper.url(componentRequestUri)).thenReturn(templateRequestHolder);
         templatePageComponent = new PageComponent(uri, false, true, new HashMap());
+        when(mockRequest.uri()).thenReturn("testUrl?" + requestParams);
         when(mockRequest.method()).thenReturn("GET");
 
 
         F.Promise<WS.Response> responsePromise = responsePromiseFactory.getResponsePromise(mockRequest, templatePageComponent);
 
-        verify(templateRequestHolder).setQueryParameter("param1", "value1");
-        verify(templateRequestHolder).setQueryParameter("param2", null);
-        verify(templateRequestHolder).setQueryParameter("param3", "value3");
+        verify(wrapper).url(componentRequestUri);
 
         verify(templateRequestHolder).get();
         verifyNoMoreInteractions(templateRequestHolder);

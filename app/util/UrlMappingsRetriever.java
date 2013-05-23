@@ -37,7 +37,7 @@ public class UrlMappingsRetriever implements InitializingBean {
             JsonNode jsonNode = restTemplate.getForObject(wsRequestPath, JsonNode.class);
             urlMatcher = new UrlMatcherImpl(jsonNode);
         } catch (Throwable e) {
-            throw new RuntimeException("Error loading mappings", e);
+            throw new RuntimeException("Error loading mappings from address: " + wsRequestPath, e);
         }
     }
 

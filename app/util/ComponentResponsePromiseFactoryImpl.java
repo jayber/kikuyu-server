@@ -2,19 +2,40 @@ package util;
 
 import controllers.ws.WSWrapper;
 import domain.PageComponent;
+import org.apache.commons.lang3.StringUtils;
+import play.Logger;
 import play.libs.F;
 import play.libs.WS;
 import play.mvc.Http;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ComponentResponsePromiseFactoryImpl implements ComponentResponsePromiseFactory {
 
+    private static final Pattern QUERY_STRING_BOUNDARY = Pattern.compile("[\\?]");
+    private static final Pattern PARAMS_PATTERN = Pattern.compile("\\{params\\}");
+
     private WSWrapper wsWrapper;
     private static final String POST = "POST";
+
+    @Override
+    public F.Promise<WS.Response> getResponsePromise(Http.Request request, PageComponent pageComponent) {
+
+        final String rQueryString = findQueryString(request.uri());
+
+        final String pageComponentUrl = substituteVars(pageComponent.getUrl(), rQueryString);
+
+        Logger.debug("promising content from: " + pageComponentUrl);
+        final WS.WSRequestHolder urlHolder = wsWrapper.url(pageComponentUrl);
+
+        this.copyRequestHeaders(urlHolder, request);
+
+        return this.copyMethodAndBody(pageComponent, urlHolder, request);
+    }
 
     private F.Promise<WS.Response> copyMethodAndBody(PageComponent pageComponent, WS.WSRequestHolder urlHolder, Http.Request request) {
         F.Promise<WS.Response> componentPromise;
@@ -42,20 +63,6 @@ public class ComponentResponsePromiseFactoryImpl implements ComponentResponsePro
         }
     }
 
-    private void setRequestParams(UriSplit urlParts, WS.WSRequestHolder urlHolder) {
-        for (String[] query : urlParts.getParams()) {
-            if (query.length > 1) {
-                try {
-                    urlHolder.setQueryParameter(query[0], URLDecoder.decode(query[1], "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                urlHolder.setQueryParameter(query[0], null);
-            }
-        }
-    }
-
     private String getPostData(Map<String, String[]> map) {
         StringBuilder sb = new StringBuilder();
         int i = 0;
@@ -72,22 +79,24 @@ public class ComponentResponsePromiseFactoryImpl implements ComponentResponsePro
         return sb.toString();
     }
 
-    private UriSplit splitUrl(String componentUrl) {
-        return new UriSplit(componentUrl);
+    private String findQueryString(String componentUrl) {
+        if (StringUtils.isNotEmpty(componentUrl)) {
+            String[] split = QUERY_STRING_BOUNDARY.split(componentUrl);
+            if (split.length == 2) {
+                return split[1];
+            }
+        }
+        return "";
     }
 
-    @Override
-    public F.Promise<WS.Response> getResponsePromise(Http.Request request, PageComponent pageComponent) {
-
-        final UriSplit urlParts = splitUrl(pageComponent.getUrl());
-
-        final WS.WSRequestHolder urlHolder = wsWrapper.url(urlParts.getUri());
-
-        this.setRequestParams(urlParts, urlHolder);
-
-        this.copyRequestHeaders(urlHolder, request);
-
-        return this.copyMethodAndBody(pageComponent, urlHolder, request);
+    private String substituteVars(String pageComponent, String rQueryString) {
+        final Matcher matcher = PARAMS_PATTERN.matcher(pageComponent);
+        final StringBuffer sb = new StringBuffer();
+        while (matcher.find()) {
+            matcher.appendReplacement(sb, rQueryString);
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
     }
 
     public void setWsWrapper(WSWrapper wsWrapper) {
