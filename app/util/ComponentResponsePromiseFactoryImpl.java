@@ -17,14 +17,12 @@ import java.util.regex.Pattern;
 public class ComponentResponsePromiseFactoryImpl implements ComponentResponsePromiseFactory {
 
     private static final String[] HEADER_NAMES = new String[]{"Content-Type", "Cookie"};
-
-    private static final Pattern QUERY_STRING_BOUNDARY = Pattern.compile("[\\?]");
+    private static final Pattern QUERY_STRING_BOUNDARY = Pattern.compile("\\?");
     private static final Pattern AMPERSAND_PATTERN = Pattern.compile("&");
     private static final Pattern EQUALS_PATTERN = Pattern.compile("=");
-
     private static final Pattern PARAMS_PATTERN = Pattern.compile("\\{params\\}");
-
     private static final String POST = "POST";
+
     private WSWrapper wsWrapper;
 
     @Override
@@ -36,7 +34,7 @@ public class ComponentResponsePromiseFactoryImpl implements ComponentResponsePro
 
         Logger.debug("promising content from: " + pageComponentUrl);
 
-        // it's irritating that setting the queryString on the arg passed to WS.url doesn't work - the query string is not sent.
+        // it's irritating that setting the queryString as part of the URI passed to WS.url() doesn't work - the query string is not sent.
         // so have to parse params and then set them individually on WSRequestHolder
         final String[] urlParts = splitPathAndQuery(pageComponentUrl);
         final WS.WSRequestHolder urlHolder = wsWrapper.url(urlParts[0]);
