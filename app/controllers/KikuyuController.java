@@ -20,8 +20,7 @@ public class KikuyuController extends Controller {
     private ResponseComposer responseComposer;
     private ComponentResponsePromiseFactory responsePromiseFactory;
 
-    //todo: record each request that is mapped to a url and show in urlmappings number of requests in last month, so can delete mappings that aren't being used
-    //todo: copy headers (e.g. cookies) from original request into sub requests and then from responses
+    //todo: record each request that is mapped to a url and show in app number of requests in last month, so user can delete mappings that aren't being used
     public Result siphon(String path) {
         final Page matchingPage = urlMappingsRetriever.getUrlMatcher().match(path);
 

@@ -26,7 +26,8 @@ public class ComponentResponsePromiseFactoryImplTest {
     @Mock
     private WSWrapper wrapper;
 
-    private ComponentResponsePromiseFactoryImpl responsePromiseFactory;
+    private ComponentResponsePromiseFactoryImpl target;
+
     private PageComponent templatePageComponent;
     private WS.WSRequestHolder templateRequestHolder;
     private F.Promise<WS.Response> templateResponsePromise;
@@ -38,8 +39,8 @@ public class ComponentResponsePromiseFactoryImplTest {
         templateResponsePromise = mock(F.Promise.class);
         mockRequest = mock(Http.Request.class);
 
-        responsePromiseFactory = new ComponentResponsePromiseFactoryImpl();
-        responsePromiseFactory.setWsWrapper(wrapper);
+        target = new ComponentResponsePromiseFactoryImpl();
+        target.setWsWrapper(wrapper);
 
         when(templateRequestHolder.get()).thenReturn(templateResponsePromise);
     }
@@ -54,7 +55,7 @@ public class ComponentResponsePromiseFactoryImplTest {
         HashMap<String, String[]> formValues = new HashMap<String, String[]>();
         when(requestBody.asFormUrlEncoded()).thenReturn(formValues);
 
-        F.Promise<WS.Response> responsePromise = responsePromiseFactory.getResponsePromise(mockRequest, templatePageComponent);
+        F.Promise<WS.Response> responsePromise = target.getResponsePromise(mockRequest, templatePageComponent);
 
         verify(templateRequestHolder).post("");
         verifyNoMoreInteractions(templateRequestHolder);
@@ -72,7 +73,7 @@ public class ComponentResponsePromiseFactoryImplTest {
         formValues.put("body2", new String[]{"test2"});
         when(requestBody.asFormUrlEncoded()).thenReturn(formValues);
 
-        F.Promise<WS.Response> responsePromise = responsePromiseFactory.getResponsePromise(mockRequest, templatePageComponent);
+        F.Promise<WS.Response> responsePromise = target.getResponsePromise(mockRequest, templatePageComponent);
 
         verify(templateRequestHolder).post("body2=test2&body=test");
         verifyNoMoreInteractions(templateRequestHolder);
@@ -84,7 +85,7 @@ public class ComponentResponsePromiseFactoryImplTest {
         templatePageComponent = new PageComponent(TEMPLATE_URL, false, true, new HashMap());
         when(mockRequest.method()).thenReturn("POST");
 
-        F.Promise<WS.Response> responsePromise = responsePromiseFactory.getResponsePromise(mockRequest, templatePageComponent);
+        F.Promise<WS.Response> responsePromise = target.getResponsePromise(mockRequest, templatePageComponent);
 
         verify(templateRequestHolder).get();
         verifyNoMoreInteractions(templateRequestHolder);
@@ -101,7 +102,7 @@ public class ComponentResponsePromiseFactoryImplTest {
         when(mockRequest.headers()).thenReturn(headers);
         when(mockRequest.method()).thenReturn("GET");
 
-        F.Promise<WS.Response> responsePromise = responsePromiseFactory.getResponsePromise(mockRequest, templatePageComponent);
+        F.Promise<WS.Response> responsePromise = target.getResponsePromise(mockRequest, templatePageComponent);
 
         verify(templateRequestHolder).get();
         verify(templateRequestHolder).setHeader("Content-Type", "value");
@@ -111,18 +112,23 @@ public class ComponentResponsePromiseFactoryImplTest {
 
     @Test
     public void testUrlGetWithQueryParams() throws Exception {
-        String uri = "http://" + TEMPLATE_URL + ".com/?param1=value1&{params}&param2&param3=value3";
+        String componentUrl = "http://" + TEMPLATE_URL + ".com/?param1=value1&{params}&param2&param3=value3";
         String requestParams = "rparam1=rval1&rparam2=rval2";
-        String componentRequestUri = "http://" + TEMPLATE_URL + ".com/?param1=value1&" + requestParams + "&param2&param3=value3";
-        when(wrapper.url(componentRequestUri)).thenReturn(templateRequestHolder);
-        templatePageComponent = new PageComponent(uri, false, true, new HashMap());
+        String componentRequestUrl = "http://" + TEMPLATE_URL + ".com/";
+        when(wrapper.url(componentRequestUrl)).thenReturn(templateRequestHolder);
+        templatePageComponent = new PageComponent(componentUrl, false, true, new HashMap());
         when(mockRequest.uri()).thenReturn("testUrl?" + requestParams);
         when(mockRequest.method()).thenReturn("GET");
 
+        F.Promise<WS.Response> responsePromise = target.getResponsePromise(mockRequest, templatePageComponent);
 
-        F.Promise<WS.Response> responsePromise = responsePromiseFactory.getResponsePromise(mockRequest, templatePageComponent);
+        verify(wrapper).url(componentRequestUrl);
 
-        verify(wrapper).url(componentRequestUri);
+        verify(templateRequestHolder).setQueryParameter("param1", "value1");
+        verify(templateRequestHolder).setQueryParameter("rparam1", "rval1");
+        verify(templateRequestHolder).setQueryParameter("rparam2", "rval2");
+        verify(templateRequestHolder).setQueryParameter("param2", "");
+        verify(templateRequestHolder).setQueryParameter("param3", "value3");
 
         verify(templateRequestHolder).get();
         verifyNoMoreInteractions(templateRequestHolder);

@@ -38,7 +38,7 @@ public class ComposeClientResponseFunction implements F.Function<List<WS.Respons
     @Override
     public Result apply(List<WS.Response> responses) throws Throwable {
         WS.Response templateResponse = responses.get(0);
-        Logger.info("component content from: " + templateResponse.getUri());
+        Logger.info("received content from: " + templateResponse.getUri());
 
         final Http.Response response = Controller.response();
 
@@ -78,7 +78,7 @@ public class ComposeClientResponseFunction implements F.Function<List<WS.Respons
         // starting from 1 is not a mistake!
         for (int i = 1; i < responses.size(); i++) {
             WS.Response componentResponse = responses.get(i);
-            Logger.info("component content from: " + componentResponse.getUri());
+            Logger.info("received content from: " + componentResponse.getUri());
             responseBodies[i] = componentResponse.getBody();
         }
     }
