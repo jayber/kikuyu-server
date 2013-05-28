@@ -77,7 +77,7 @@ public class ComponentResponsePromiseFactoryImpl implements ComponentResponsePro
 
     private void copyRequestHeaders(WS.WSRequestHolder urlHolder, Http.Request request) {
         //todo: copying all headers causes problems, so just copying Content-Type and Cookie for now
-        //this is probably to do with request header "Accept-Encoding" causing response to be compressed,
+        //this is might be to do with request header "Accept-Encoding" causing response to be compressed,
         //which isn't handled, breaking something else.
         Map<String, String[]> headers = request.headers();
         for (String key : HEADER_NAMES) {
