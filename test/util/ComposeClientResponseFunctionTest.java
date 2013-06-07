@@ -2,6 +2,7 @@ package util;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.internal.verification.Times;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -42,6 +43,7 @@ public class ComposeClientResponseFunctionTest {
 
         when(templatePageResponse.getHeader("Content-Type")).thenReturn("text/html");
         when(templatePageResponse.getBody()).thenReturn(TEMPLATE_PAGE_HTML);
+        when(templatePageResponse.getStatus()).thenReturn(200);
         when(componentPageResponse1.getBody()).thenReturn(COMPONENT1_PAGE_HTML);
         when(componentPageResponse2.getBody()).thenReturn(COMPONENT2_PAGE_HTML);
         when(responseComposer.composeBody(TestFixtures.page, TEMPLATE_PAGE_HTML, COMPONENT1_PAGE_HTML, COMPONENT2_PAGE_HTML)).thenReturn(COMBINED_RESPONSE);
@@ -108,7 +110,7 @@ public class ComposeClientResponseFunctionTest {
                 verify(templatePageResponse).getHeader(header);
             }
         }
-        verify(templatePageResponse).getStatus();
+        verify(templatePageResponse, new Times(2)).getStatus();
         verify(templatePageResponse).getBodyAsStream();
         verify(okStatus).as("binary");
         verifyNoMoreInteractions(componentPageResponse);

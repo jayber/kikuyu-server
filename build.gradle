@@ -1,0 +1,147 @@
+import java.util.regex.Matcher
+
+apply plugin: 'java'
+
+ext {
+    FILENAME_PATTERN = ~"Your application is ready in (.*)"
+    username = { "jbown$it" }
+    password = { "darw1nd$it" }
+    instancePath = { "/apps1/instance_d$it" }
+    hostName = "a-devapp1"
+    kikuyuDir = 'kikuyu'
+    serverPath = { envNo -> "${instancePath(envNo)}/$kikuyuDir" }
+    scpPath = { envNo -> "${username(envNo)}:${password(envNo)}@$hostName:${serverPath(envNo)}" }
+}
+
+task doBuild(type: Exec) {
+    commandLine 'cmd', '/c', "$rootDir/deploy/dist.bat"
+
+    standardOutput = new ByteArrayOutputStream()
+
+    ext.output = {
+        return standardOutput.toString()
+    }
+}
+
+task deploy(dependsOn: doBuild) << {
+
+    println "*** IMPORTANT: make sure you have stopped your kikuyu server before running the deploy script, otherwise it will fail." +
+            " Run ./stopKikuyuServer.sh"
+
+    checkVariables()
+
+    String filePath = getFileLocation()
+
+    println "filename: $filePath"
+
+    defineAntTasks()
+
+    uploadFile(filePath)
+
+    def fileName = getFileName(filePath)
+    def dirName = fileName.split(".zip")[0]
+
+    unzipServer(fileName, dirName)
+
+    setUpServerScripts(dirName)
+
+    println "*** SUCCESS: you can start your kikuyu server by running: ${serverPath(envNo)}/$dirName/startKikuyuServer.sh"
+
+}
+
+private void setUpServerScripts(String dirName) {
+    runServerCommand("chmod 755 ${serverPath(envNo)}/$dirName/start")
+
+    uploadFile("$rootDir/deploy/startKikuyuServer.sh", dirName)
+
+    runServerCommand("chmod 755 ${serverPath(envNo)}/$dirName/startKikuyuServer.sh")
+
+    uploadFile("$rootDir/deploy/stopKikuyuServer.sh", dirName)
+
+    runServerCommand("chmod 755 ${serverPath(envNo)}/$dirName/stopKikuyuServer.sh")
+}
+
+task cleanPlay(type: Exec) {
+    workingDir "$rootDir"
+
+    commandLine 'cmd', '/c', 'play.bat', 'clean'
+
+    standardOutput = System.out
+}
+
+clean.dependsOn << cleanPlay
+
+private checkVariables() {
+    if (!hasProperty('envNo')) {
+        throw new RuntimeException("No 'envNo' property found. This is the number of the development environment to use" +
+                " (e.g. the '56' of 'd56');" +
+                " it must be set to upload and unzip the distribution. Set it using -PenvNo=xx command line argument," +
+                " or a gradle.properties file.")
+    }
+
+    println "*** Your environment number is set to: $envNo"
+
+    if (!System.getProperty('http.proxyHost')) {
+        println "WARNING: no proxy host config found. If you need to use a proxy to reach the internet the deploy may fail." +
+                " Use -D arguments for JVM proxy values or create a gradle.properties file with entries like 'systemProp.http.proxyHost'."
+    }
+}
+
+private String getFileName(String filePath) {
+    def parts = filePath.split("\\\\")
+    def nameOfFile = parts.last()
+    return nameOfFile
+}
+
+private void unzipServer(nameOfFile, dirName) {
+    runServerCommand("rm -r ${serverPath(envNo)}/$dirName/")
+
+    def command = "unzip -o ${serverPath(envNo)}/${nameOfFile} -d ${serverPath(envNo)}/"
+    runServerCommand(command)
+}
+
+private void runServerCommand(command) {
+    println "SSH command: $command"
+    ant.ssh(host: hostName, username: username(envNo), password: password(envNo), trust: 'yes', command: command, outputproperty: 'outprop')
+    println ant.outprop
+    ant.outprop = ""
+}
+
+private void uploadFile(String fileName, extraPath = "") {
+    def toDir = scpPath(envNo) + "/" + extraPath
+    ant.scopy(file: fileName, todir: toDir, trust: true)
+    println "File: $fileName uploaded to: $toDir"
+}
+
+private void defineAntTasks() {
+    ant.taskdef(name: 'scopy',
+            classname: 'org.apache.tools.ant.taskdefs.optional.ssh.Scp',
+            classpath: configurations.antScp.asPath)
+
+    ant.taskdef(name: 'ssh',
+            classname: 'org.apache.tools.ant.taskdefs.optional.ssh.SSHExec',
+            classpath: configurations.antScp.asPath)
+}
+
+private String getFileLocation() {
+    String output = doBuild.output()
+    println output
+    Matcher matcher = FILENAME_PATTERN.matcher(output)
+    if (!matcher.find()) {
+        throw new RuntimeException("no filename found")
+    }
+    String fileName = matcher.group(1)
+    return fileName
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    antScp
+}
+
+dependencies {
+    antScp("org.apache.ant:ant-jsch:1.8.3")
+}

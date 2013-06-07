@@ -56,11 +56,9 @@ You'll need to add the  -DconfigServerContext=servname:port/context JVM arg when
 In dev this will be the "run" command in the play console, or the "Play 2" run configuration within IntelliJ
 (use the environment properties box to add the arg)
 
-Server starting commands
-#########################
-to setup java:
-. /apps1/releases/ant-setup.sh
-set permissions:
-chmod 755 start
-run:
-./start -DconfigServerContext=localhost:9001
+Deploy
+######
+Use the build.gradle to deploy your kikuyu-server to a dev environment. Make sure that you specify the environment number
+use a '-P' command line argument or gradle.properties file.
+
+Once you have deployed the app you can stop it and start is using the scripts in the unzipped directory.

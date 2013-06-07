@@ -53,14 +53,18 @@ public class ComposeClientResponseFunction implements F.Function<List<WS.Respons
         WS.Response templateResponse = responses.get(0);
         Results.Status status;
         final String templateContentType = templateResponse.getHeader("Content-Type");
-        //todo: should probably make set of Content-Types that can be processed an application setting
-        if (templateContentType.startsWith("text")) {
-            String responseBodies[] = new String[responses.size()];
-            responseBodies[0] = templateResponse.getBody();
-            populateBodies(responseBodies, responses);
-            status = Results.ok(responseComposer.composeBody(page, responseBodies)).as(templateContentType);
+        if (templateResponse.getStatus() != 200) {
+            status = Results.status(templateResponse.getStatus(), templateResponse.getBody());
         } else {
-            status = Results.status(templateResponse.getStatus(), templateResponse.getBodyAsStream()).as(templateContentType);
+            //todo: should probably make set of Content-Types that can be processed an application setting
+            if (templateContentType.startsWith("text")) {
+                String responseBodies[] = new String[responses.size()];
+                responseBodies[0] = templateResponse.getBody();
+                populateBodies(responseBodies, responses);
+                status = Results.ok(responseComposer.composeBody(page, responseBodies)).as(templateContentType);
+            } else {
+                status = Results.status(templateResponse.getStatus(), templateResponse.getBodyAsStream()).as(templateContentType);
+            }
         }
         return status;
     }
