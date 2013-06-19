@@ -5,6 +5,6 @@ import play.libs.F;
 import play.libs.WS;
 import play.mvc.Http;
 
-public interface ComponentResponsePromiseFactory {
+public interface ResponsePromiseFactory {
     F.Promise<WS.Response> getResponsePromise(Http.Request request, PageComponent pageComponent);
 }

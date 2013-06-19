@@ -7,9 +7,9 @@ import play.libs.WS;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
-import util.ComponentResponsePromiseFactory;
 import util.ComposeClientResponseFunction;
 import util.ResponseComposer;
+import util.ResponsePromiseFactory;
 import util.UrlMappingsRetriever;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class KikuyuController extends Controller {
 
     private UrlMappingsRetriever urlMappingsRetriever;
     private ResponseComposer responseComposer;
-    private ComponentResponsePromiseFactory responsePromiseFactory;
+    private ResponsePromiseFactory responsePromiseFactory;
 
     //todo: record each request that is mapped to a url and show in app number of requests in last month, so user can delete mappings that aren't being used
     public Result siphon(String path) {
@@ -53,7 +53,7 @@ public class KikuyuController extends Controller {
         this.responseComposer = responseComposer;
     }
 
-    public void setResponsePromiseFactory(ComponentResponsePromiseFactory responsePromiseFactory) {
+    public void setResponsePromiseFactory(ResponsePromiseFactory responsePromiseFactory) {
         this.responsePromiseFactory = responsePromiseFactory;
     }
 }

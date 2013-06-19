@@ -11,7 +11,7 @@
         <property name="reloadUrlMappingsFreqSecs" value="60"/>
     </bean>
 
-    <bean id="responsePromiseFactory" class="util.ComponentResponsePromiseFactoryImpl">
+    <bean id="responsePromiseFactory" class="util.ResponsePromiseFactoryImpl">
         <property name="wsWrapper">
             <bean class="controllers.ws.WSWrapperImpl"/>
         </property>

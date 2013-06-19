@@ -9,12 +9,13 @@ import play.libs.WS;
 import play.mvc.Http;
 
 import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ComponentResponsePromiseFactoryImpl implements ComponentResponsePromiseFactory {
+public class ResponsePromiseFactoryImpl implements ResponsePromiseFactory {
 
     private static final String[] HEADER_NAMES = new String[]{"Content-Type", "Cookie"};
     private static final Pattern QUERY_STRING_BOUNDARY = Pattern.compile("\\?");
@@ -36,6 +37,7 @@ public class ComponentResponsePromiseFactoryImpl implements ComponentResponsePro
 
         // it's irritating that setting the queryString as part of the URI passed to WS.url() doesn't work - the query string is not sent.
         // so have to parse params and then set them individually on WSRequestHolder
+        // todo: find a better way
         final String[] urlParts = splitPathAndQuery(pageComponentUrl);
         final WS.WSRequestHolder urlHolder = wsWrapper.url(urlParts[0]);
         if (urlParts.length == 2) {
@@ -53,7 +55,12 @@ public class ComponentResponsePromiseFactoryImpl implements ComponentResponsePro
             final String[] nameValue = EQUALS_PATTERN.split(param);
             String value;
             if (nameValue.length == 2) {
-                value = nameValue[1];
+                //decoding is necessary since Play will automatically encode params, resulting in double encoding
+                try {
+                    value = URLDecoder.decode(nameValue[1], "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
             } else {
                 value = "";
             }
@@ -120,14 +127,10 @@ public class ComponentResponsePromiseFactoryImpl implements ComponentResponsePro
         return QUERY_STRING_BOUNDARY.split(componentUrl);
     }
 
-    private String substituteVars(String pageComponent, String rQueryString) {
-        final Matcher matcher = PARAMS_PATTERN.matcher(pageComponent);
-        final StringBuffer sb = new StringBuffer();
-        while (matcher.find()) {
-            matcher.appendReplacement(sb, rQueryString);
-        }
-        matcher.appendTail(sb);
-        return sb.toString();
+    private String substituteVars(String componentUrl, String realQueryString) {
+        final Matcher matcher = PARAMS_PATTERN.matcher(componentUrl);
+        String rtnVal = matcher.replaceAll(realQueryString);
+        return rtnVal;
     }
 
     public void setWsWrapper(WSWrapper wsWrapper) {

@@ -19,14 +19,14 @@ import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(value = {Controller.class})
-public class ComponentResponsePromiseFactoryImplTest {
+public class ResponsePromiseFactoryImplTest {
 
     private static final String TEMPLATE_URL = "templateUrl";
 
     @Mock
     private WSWrapper wrapper;
 
-    private ComponentResponsePromiseFactoryImpl target;
+    private ResponsePromiseFactoryImpl target;
 
     private PageComponent templatePageComponent;
     private WS.WSRequestHolder templateRequestHolder;
@@ -39,7 +39,7 @@ public class ComponentResponsePromiseFactoryImplTest {
         templateResponsePromise = mock(F.Promise.class);
         mockRequest = mock(Http.Request.class);
 
-        target = new ComponentResponsePromiseFactoryImpl();
+        target = new ResponsePromiseFactoryImpl();
         target.setWsWrapper(wrapper);
 
         when(templateRequestHolder.get()).thenReturn(templateResponsePromise);
@@ -114,15 +114,15 @@ public class ComponentResponsePromiseFactoryImplTest {
     public void testUrlGetWithQueryParams() throws Exception {
         String componentUrl = "http://" + TEMPLATE_URL + ".com/?param1=value1&{params}&param2&param3=value3";
         String requestParams = "rparam1=rval1&rparam2=rval2";
-        String componentRequestUrl = "http://" + TEMPLATE_URL + ".com/";
-        when(wrapper.url(componentRequestUrl)).thenReturn(templateRequestHolder);
+        String urlToBeRequested = "http://" + TEMPLATE_URL + ".com/";
+        when(wrapper.url(urlToBeRequested)).thenReturn(templateRequestHolder);
         templatePageComponent = new PageComponent(componentUrl, false, true, new HashMap());
         when(mockRequest.uri()).thenReturn("testUrl?" + requestParams);
         when(mockRequest.method()).thenReturn("GET");
 
         F.Promise<WS.Response> responsePromise = target.getResponsePromise(mockRequest, templatePageComponent);
 
-        verify(wrapper).url(componentRequestUrl);
+        verify(wrapper).url(urlToBeRequested);
 
         verify(templateRequestHolder).setQueryParameter("param1", "value1");
         verify(templateRequestHolder).setQueryParameter("rparam1", "rval1");
@@ -133,4 +133,26 @@ public class ComponentResponsePromiseFactoryImplTest {
         verify(templateRequestHolder).get();
         verifyNoMoreInteractions(templateRequestHolder);
     }
+
+    //just tests that params are decoded before being set on the request holder, otherwise Play will double encode them
+    @Test
+    public void testUrlGetWithQueryParamsUrlEncoded() throws Exception {
+        String componentUrl = "http://" + TEMPLATE_URL + ".com/?{params}";
+        String requestParams = "childpagename=PLC%2FPageLayout&pagename=PLCWrapper&view=cselement%3APLC%2FAuthentication%2FDefaultLogin";
+        String urlToBeRequested = "http://" + TEMPLATE_URL + ".com/";
+
+        when(wrapper.url(urlToBeRequested)).thenReturn(templateRequestHolder);
+        templatePageComponent = new PageComponent(componentUrl, false, true, new HashMap());
+        when(mockRequest.uri()).thenReturn("testUrl?" + requestParams);
+        when(mockRequest.method()).thenReturn("GET");
+
+        F.Promise<WS.Response> responsePromise = target.getResponsePromise(mockRequest, templatePageComponent);
+
+        verify(templateRequestHolder).setQueryParameter("childpagename", "PLC/PageLayout");
+        verify(templateRequestHolder).setQueryParameter("pagename", "PLCWrapper");
+        verify(templateRequestHolder).setQueryParameter("view", "cselement:PLC/Authentication/DefaultLogin");
+        verify(templateRequestHolder).get();
+        verifyNoMoreInteractions(templateRequestHolder);
+    }
+
 }

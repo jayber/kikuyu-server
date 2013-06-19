@@ -67,19 +67,19 @@ public class ResponseComposerImpl implements ResponseComposer {
     }
 
     private List<String> mergeTemplateWithUnusedComponentBodies(String templateText, List<String> bodies) {
-        StringBuffer sb = new StringBuffer();
-        int unusedBodyIndex = searchAndReplaceSlotsWithComponentBodies(templateText, bodies, sb);
-        String mergedText = sb.toString();
-        return attachUnusedComponentBodies(bodies, unusedBodyIndex, mergedText);
-    }
-
-    private List<String> attachUnusedComponentBodies(List<String> bodies, int nextBodyIndex, String mergedText) {
+        StringBuffer mergedResult = new StringBuffer();
+        int unusedBodyIndex = searchAndReplaceSlotsWithComponentBodies(templateText, bodies, mergedResult);
+        String mergedText = mergedResult.toString();
         final List<String> returnBodies = new ArrayList<String>();
         returnBodies.add(mergedText);
-        if (nextBodyIndex < bodies.size()) {
-            returnBodies.addAll(bodies.subList(nextBodyIndex, bodies.size()));
-        }
+        appendUnusedComponentBodies(bodies, unusedBodyIndex, returnBodies);
         return returnBodies;
+    }
+
+    private void appendUnusedComponentBodies(List<String> bodies, int unusedBodyIndex, List<String> returnBodies) {
+        if (unusedBodyIndex < bodies.size()) {
+            returnBodies.addAll(bodies.subList(unusedBodyIndex, bodies.size()));
+        }
     }
 
     private int searchAndReplaceSlotsWithComponentBodies(String templateText, List<String> bodies, StringBuffer sb) {
@@ -87,7 +87,7 @@ public class ResponseComposerImpl implements ResponseComposer {
         int i = 0;
         while (matcher.find()) {
             String body = bodies.get(i++);
-            matcher.appendReplacement(sb, body);
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(body));
         }
         matcher.appendTail(sb);
         return i;

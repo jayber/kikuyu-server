@@ -5,6 +5,7 @@ import domain.PageComponent;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
@@ -54,5 +55,37 @@ public class ResponseComposerImplTest {
         final String output = responseComposer.composeBody(new Page(pageComponents), "before #{var1} middle #{var2} after #{var3}");
 
         assertEquals("before value1 middle value2 after ", output);
+    }
+
+    @Test
+    public void testReplacementValueNotTreatedAsGroup() throws Exception {
+
+        final ResponseComposerImpl responseComposer = new ResponseComposerImpl();
+        ArrayList<PageComponent> pageComponents = new ArrayList<PageComponent>();
+
+        pageComponents.add(new PageComponent("comp1 url", false, true, Collections.<String, String>emptyMap()));
+        pageComponents.add(new PageComponent("comp2 url", false, false, Collections.<String, String>emptyMap()));
+
+        final String output = responseComposer.composeBody(new Page(pageComponents),
+                "before <div location> </div> after",
+                "$5");
+
+        assertEquals("before $5 after", output);
+    }
+
+    @Test
+    public void testReplacementValueNotTreatedAsInvalidGroup() throws Exception {
+
+        final ResponseComposerImpl responseComposer = new ResponseComposerImpl();
+        ArrayList<PageComponent> pageComponents = new ArrayList<PageComponent>();
+
+        pageComponents.add(new PageComponent("comp1 url", false, true, Collections.<String, String>emptyMap()));
+        pageComponents.add(new PageComponent("comp2 url", false, false, Collections.<String, String>emptyMap()));
+
+        final String output = responseComposer.composeBody(new Page(pageComponents),
+                "before <div location> </div> after",
+                "$d");
+
+        assertEquals("before $d after", output);
     }
 }

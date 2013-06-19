@@ -37,7 +37,7 @@ public class KikuyuControllerTest {
     @Mock
     private ResponseComposer responseComposer;
     @Mock
-    private ComponentResponsePromiseFactory requestPromiseFactory;
+    private ResponsePromiseFactory requestPromiseFactory;
 
     private KikuyuController kikuyuController = new KikuyuController();
 
