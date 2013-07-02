@@ -8,7 +8,7 @@ ext {
     password = { "darw1nd$it" }
     instancePath = { "/apps1/instance_d$it" }
     hostName = "a-devapp1"
-    kikuyuDir = 'kikuyu'
+    kikuyuDir = 'kikuyu/kikuyu-server'
     serverPath = { envNo -> "${instancePath(envNo)}/$kikuyuDir" }
     scpPath = { envNo -> "${username(envNo)}:${password(envNo)}@$hostName:${serverPath(envNo)}" }
 }
@@ -36,12 +36,14 @@ task deploy(dependsOn: doBuild) << {
 
     defineAntTasks()
 
+    emptyRemoteDirectory(serverPath(envNo))
+
     uploadFile(filePath)
 
     def fileName = getFileName(filePath)
     def dirName = fileName.split(".zip")[0]
 
-    unzipServer(fileName, dirName)
+    unzipServer(fileName)
 
     setUpServerScripts(dirName)
 
@@ -93,8 +95,7 @@ private String getFileName(String filePath) {
     return nameOfFile
 }
 
-private void unzipServer(nameOfFile, dirName) {
-    runServerCommand("rm -r ${serverPath(envNo)}/$dirName/")
+private void unzipServer(nameOfFile) {
 
     def command = "unzip -o ${serverPath(envNo)}/${nameOfFile} -d ${serverPath(envNo)}/"
     runServerCommand(command)
@@ -105,6 +106,16 @@ private void runServerCommand(command) {
     ant.ssh(host: hostName, username: username(envNo), password: password(envNo), trust: 'yes', command: command, outputproperty: 'outprop')
     println ant.outprop
     ant.outprop = ""
+}
+
+private emptyRemoteDirectory(String deployDir) {
+
+    def removeAllContents = "rm -f -r " + deployDir
+    def createIfDoesNotExist = "mkdir -p " + deployDir
+
+    runServerCommand(removeAllContents)
+    runServerCommand(createIfDoesNotExist)
+
 }
 
 private void uploadFile(String fileName, extraPath = "") {

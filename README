@@ -1,43 +1,34 @@
-kikuyu
-======
+kikuyu server
+=============
 
 Kikuyu is the composition and delivery application for functional components (i.e. components that define all their
 layers with the component, might be called vertical components after vertical slice.). These are distinct from components
 that only cover a single layer of architecture - horizontal components, may be service components as parts of a
 "wedding cake" architecture.
 
-Installation:
-#############
+Server installation
+###################
 
-Install Play Framework on you machine:
+Pre-requisites
+
+1. Install Kikuyu application
+https://github.com/jayber/kikuyu
+
+2. Install sbt on your machine:
+http://www.scala-sbt.org/
+You might need to set up proxy by providing -Dhttp_proxy=http://cache2.practicallaw.com:8080 in sbtconfig.txt file.
+Alternatively if you are running SBT from console window you may set proxy using command
+ 'set http_proxy=http://cache2.practicallaw.com:8080'. That allows to run the play or sbt command in the same window.
+This setting therefore doesn't persist between command windows.
+
+2. Install Play Framework on you machine:
 http://www.playframework.com/
 
-Install sbt on your machine:
-http://www.scala-sbt.org/
+3. Install 'Scala' plugin for IntelliJ IDE
 
-You might need to set your proxy in your system environment variables:
+4. Install the 'Play 2.0 Framework support' plugin (this is not just the ordinary Play plugin, you need to search
+for it by connecting to the IntelliJ plugin repository)
 
-http_proxy=http://cache2.practicallaw.com:8080
-
-however this will mean any WS request to the localhost address will also attempt to go via the proxy and therefore fail.
-i tried this:
-
-no_proxy=localhost,127.0.0.1
-
-it didn't work!
-I had to remove the http_proxy env var to get it to work.
-
-Now, whenever I run a play or sbt command that needs to resolve dependencies, such as 'clean', i run
-
-set http_proxy=http://cache2.practicallaw.com:8080
-
-in the console window and then run the play or sbt command in the same window. This setting therefore doesn't persist
-between command windows.
-
-You can probably get something better going using JVM proxy arguments (e.g. -Dhttp_proxy ?)
-
-Install the Play 2.0 Plugin (this is not just the ordinary Play plugin, you need to search for it by connecting to the
-IntelliJ plugin repository)
 
 IntelliJ Dependencies
 #####################
@@ -50,15 +41,24 @@ play "idea with-sources=yes"
 
 which will update your IntelliJ project.
 
-Running
-#######
-You'll need to add the  -DconfigServerContext=servname:port/context JVM arg when you start the app.
-In dev this will be the "run" command in the play console, or the "Play 2" run configuration within IntelliJ
-(use the environment properties box to add the arg)
+Running locally
+###############
+You'll need to add the  -DconfigServerContext=[server_name]:[port]/[context] JVM arg when you start the server, which
+points server to kikuyu application WS to collect components configuration.
+If you are running server from play console, you can pass it with "run" command. If you are running IntelliJ
+Play2 configuration, use the environment properties box to add the argument.
+Default port for server is 9000, you can specify different port in Play console using 'http.port' variable, or pass it
+to 'run' command from play console. For example: 'run -DconfigServerContext=localhost:9001/kikuyu -Dhttp.port=9037'
+If Play is complaining about compilation issues, try running 'sbt clean' command from command line in project directory.
 
 Deploy
 ######
 Use the build.gradle to deploy your kikuyu-server to a dev environment. Make sure that you specify the environment number
 use a '-P' command line argument or gradle.properties file.
 
-Once you have deployed the app you can stop it and start is using the scripts in the unzipped directory.
+Running remotely
+################
+Once you have deployed the server you can stop it and start is using the scripts in the unzipped directory.
+Modify server start script to point to the right kikuyu application (check pre-requisites).
+Also you might run into issue like 'No such file or..' when trying to run the scripts. To avoid that re-save the *.sh
+file, it is likely that script file was copied in DOS format. Re-saving on server will change it to the UNIX one.
