@@ -3,4 +3,5 @@ Might need to:
 2. Automatically stop/start server when deploying
 3. Scripts dynamic bits for dev env taken from environment properties when deploying
 4. Solve DOS-UNIX format issue for copied script files
+5. Run tests when building
 

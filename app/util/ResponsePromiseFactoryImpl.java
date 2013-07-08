@@ -17,12 +17,14 @@ import java.util.regex.Pattern;
 
 public class ResponsePromiseFactoryImpl implements ResponsePromiseFactory {
 
+    private static final String ORIGINATOR_URI_HEADER_NAME = "Originator-Uri";
     private static final String[] HEADER_NAMES = new String[]{"Content-Type", "Cookie"};
     private static final Pattern QUERY_STRING_BOUNDARY = Pattern.compile("\\?");
     private static final Pattern AMPERSAND_PATTERN = Pattern.compile("&");
     private static final Pattern EQUALS_PATTERN = Pattern.compile("=");
     private static final Pattern PARAMS_PATTERN = Pattern.compile("\\{params\\}");
     private static final String POST = "POST";
+    private static final String HTTP_PREFIX = "http://";
 
     private WSWrapper wsWrapper;
 
@@ -45,6 +47,7 @@ public class ResponsePromiseFactoryImpl implements ResponsePromiseFactory {
         }
 
         this.copyRequestHeaders(urlHolder, request);
+        this.addCustomHeaders(urlHolder, request);
 
         return this.copyMethodAndBody(pageComponent, urlHolder, request);
     }
@@ -95,6 +98,11 @@ public class ResponsePromiseFactoryImpl implements ResponsePromiseFactory {
                 }
             }
         }
+    }
+
+    private void addCustomHeaders(final WS.WSRequestHolder urlHolder, final Http.Request request){
+        final String originatorUri = HTTP_PREFIX + request.host() + request.uri();
+        urlHolder.setHeader(ORIGINATOR_URI_HEADER_NAME, originatorUri);
     }
 
     private String getPostData(Map<String, String[]> map) {

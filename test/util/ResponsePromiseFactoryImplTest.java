@@ -43,6 +43,9 @@ public class ResponsePromiseFactoryImplTest {
         target.setWsWrapper(wrapper);
 
         when(templateRequestHolder.get()).thenReturn(templateResponsePromise);
+        when(mockRequest.host()).thenReturn("uk.practicallaw.com");
+        when(mockRequest.uri()).thenReturn("/absolute/uri?p=1");
+
     }
 
     @Test
@@ -58,6 +61,7 @@ public class ResponsePromiseFactoryImplTest {
         F.Promise<WS.Response> responsePromise = target.getResponsePromise(mockRequest, templatePageComponent);
 
         verify(templateRequestHolder).post("");
+        verify(templateRequestHolder).setHeader("Originator-Uri", "http://uk.practicallaw.com/absolute/uri?p=1");
         verifyNoMoreInteractions(templateRequestHolder);
     }
 
@@ -76,6 +80,7 @@ public class ResponsePromiseFactoryImplTest {
         F.Promise<WS.Response> responsePromise = target.getResponsePromise(mockRequest, templatePageComponent);
 
         verify(templateRequestHolder).post("body2=test2&body=test");
+        verify(templateRequestHolder).setHeader("Originator-Uri", "http://uk.practicallaw.com/absolute/uri?p=1");
         verifyNoMoreInteractions(templateRequestHolder);
     }
 
@@ -88,6 +93,7 @@ public class ResponsePromiseFactoryImplTest {
         F.Promise<WS.Response> responsePromise = target.getResponsePromise(mockRequest, templatePageComponent);
 
         verify(templateRequestHolder).get();
+        verify(templateRequestHolder).setHeader("Originator-Uri", "http://uk.practicallaw.com/absolute/uri?p=1");
         verifyNoMoreInteractions(templateRequestHolder);
     }
 
@@ -107,6 +113,7 @@ public class ResponsePromiseFactoryImplTest {
         verify(templateRequestHolder).get();
         verify(templateRequestHolder).setHeader("Content-Type", "value");
         verify(templateRequestHolder).setHeader("Cookie", "cvalue");
+        verify(templateRequestHolder).setHeader("Originator-Uri", "http://uk.practicallaw.com/absolute/uri?p=1");
         verifyNoMoreInteractions(templateRequestHolder);
     }
 
@@ -117,7 +124,7 @@ public class ResponsePromiseFactoryImplTest {
         String urlToBeRequested = "http://" + TEMPLATE_URL + ".com/";
         when(wrapper.url(urlToBeRequested)).thenReturn(templateRequestHolder);
         templatePageComponent = new PageComponent(componentUrl, false, true, new HashMap());
-        when(mockRequest.uri()).thenReturn("testUrl?" + requestParams);
+        when(mockRequest.uri()).thenReturn("/testUrl?" + requestParams);
         when(mockRequest.method()).thenReturn("GET");
 
         F.Promise<WS.Response> responsePromise = target.getResponsePromise(mockRequest, templatePageComponent);
@@ -131,6 +138,10 @@ public class ResponsePromiseFactoryImplTest {
         verify(templateRequestHolder).setQueryParameter("param3", "value3");
 
         verify(templateRequestHolder).get();
+        verify(templateRequestHolder).setHeader(
+                "Originator-Uri",
+                "http://uk.practicallaw.com/testUrl?rparam1=rval1&rparam2=rval2"
+        );
         verifyNoMoreInteractions(templateRequestHolder);
     }
 
@@ -143,7 +154,7 @@ public class ResponsePromiseFactoryImplTest {
 
         when(wrapper.url(urlToBeRequested)).thenReturn(templateRequestHolder);
         templatePageComponent = new PageComponent(componentUrl, false, true, new HashMap());
-        when(mockRequest.uri()).thenReturn("testUrl?" + requestParams);
+        when(mockRequest.uri()).thenReturn("/testUrl?" + requestParams);
         when(mockRequest.method()).thenReturn("GET");
 
         F.Promise<WS.Response> responsePromise = target.getResponsePromise(mockRequest, templatePageComponent);
@@ -152,6 +163,10 @@ public class ResponsePromiseFactoryImplTest {
         verify(templateRequestHolder).setQueryParameter("pagename", "PLCWrapper");
         verify(templateRequestHolder).setQueryParameter("view", "cselement:PLC/Authentication/DefaultLogin");
         verify(templateRequestHolder).get();
+        verify(templateRequestHolder).setHeader(
+                "Originator-Uri",
+                "http://uk.practicallaw.com/testUrl?childpagename=PLC%2FPageLayout&pagename=PLCWrapper&view=cselement%3APLC%2FAuthentication%2FDefaultLogin"
+        );
         verifyNoMoreInteractions(templateRequestHolder);
     }
 
