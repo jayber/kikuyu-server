@@ -32,6 +32,8 @@ public class ResponseComposerImpl implements ResponseComposer {
     }
 
     /**
+     * This can probably be made more efficient with tail recursion (or just iteration)
+     *
      * @param bodyList       = the Strings containing the response bodies making up templates and components
      * @param pageComponents = the PageComponents that contain the values for substitution into vars
      * @return the bodies with all the slots filled with component text and variables substituted

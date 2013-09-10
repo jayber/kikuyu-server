@@ -41,6 +41,11 @@ play "idea with-sources=yes"
 
 which will update your IntelliJ project.
 
+to get the Play run config to work, add
+http.proxyPort	8080
+http.proxyHost	cache2.practicallaw.com
+to the Environment variables box in the IntelliJ configuration
+
 Running locally
 ###############
 You'll need to add the  -DconfigServerContext=[server_name]:[port]/[context] JVM arg when you start the server, which
