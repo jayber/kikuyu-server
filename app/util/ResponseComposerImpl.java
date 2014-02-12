@@ -11,7 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ResponseComposerImpl implements ResponseComposer {
-    private static final Pattern SLOT_PATTERN = Pattern.compile("<div[^<>]*?location\\s*?>.*?</\\s*?div>");
+    private static final Pattern SLOT_PATTERN = Pattern.compile("<slot[^<>]*?>.*?</\\s*?slot>");
     private static final Pattern SUBSTITUTION_VARIABLE_PATTERN = Pattern.compile("@\\{(.*?)\\}");
 
     @Override

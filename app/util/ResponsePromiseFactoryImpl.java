@@ -41,7 +41,7 @@ public class ResponsePromiseFactoryImpl implements ResponsePromiseFactory {
         // so have to parse params and then set them individually on WSRequestHolder
         // todo: find a better way
         final String[] urlParts = splitPathAndQuery(pageComponentUrl);
-        final WS.WSRequestHolder urlHolder = wsWrapper.url(urlParts[0]);
+        final WS.WSRequestHolder urlHolder = wsWrapper.url(urlParts[0]).setFollowRedirects(false);
         if (urlParts.length == 2) {
             setQueryParameters(urlParts[1], urlHolder);
         }

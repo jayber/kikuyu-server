@@ -24,6 +24,7 @@ public class ComposeClientResponseFunction implements F.Function<List<WS.Respons
                     "Expires",
                     "Keep-Alive",
                     "Set-Cookie",
+                    "Location",
                     "Vary"
             };
 
