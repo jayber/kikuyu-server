@@ -29,7 +29,7 @@ public class UrlMappingsRetrieverTest {
         PowerMockito.whenNew(UrlMatcherImpl.class).withArguments(jsonNode).thenReturn(urlMatcher);
 
         final UrlMappingsRetriever urlMappingsRetriever = new UrlMappingsRetriever();
-        urlMappingsRetriever.loadUrlMappings(TEST_ADDRESS);
+        urlMappingsRetriever.loadUrlMappingsFromWS(TEST_ADDRESS);
 
         assertEquals(urlMatcher, urlMappingsRetriever.getUrlMatcher());
 
