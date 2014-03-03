@@ -7,6 +7,8 @@ GET     /                           @controllers.KikuyuController.siphon(path ?=
 GET     /*path                      @controllers.KikuyuController.siphon(path)
 POST     /                          @controllers.KikuyuController.siphon(path ?= "")
 POST     /*path                      @controllers.KikuyuController.siphon(path)
+PUT        /        @controllers.KikuyuController.siphon(path ?= "")
+PUT        /*path        @controllers.KikuyuController.siphon(path)
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.at(path="/public", file)

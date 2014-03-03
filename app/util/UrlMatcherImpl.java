@@ -1,9 +1,9 @@
 package util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import domain.Page;
 import domain.PageComponent;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
 import play.Logger;
 
 import java.io.IOException;
@@ -16,12 +16,12 @@ public class UrlMatcherImpl implements UrlMatcher {
 
     public UrlMatcherImpl(JsonNode urlMappings) {
         for (JsonNode urlMapping : urlMappings) {
-            final JsonNode pageComponents = urlMapping.path("page").path("pageComponents");
+            final JsonNode jsonPageComponents = urlMapping.path("page").path("pageComponents");
             List<PageComponent> componentUrls = new ArrayList();
-            for (JsonNode pageComponent : pageComponents) {
+            for (JsonNode jsonPageComponent : jsonPageComponents) {
                 try {
-                    componentUrls.add(new PageComponent(pageComponent.path("url").asText(), pageComponent.path("acceptPost").asBoolean(),
-                            pageComponent.path("template").asBoolean(), new ObjectMapper().readValue(pageComponent.path("substitutionVariables"), Map.class)));
+                    componentUrls.add(new PageComponent(jsonPageComponent.path("url").asText(), jsonPageComponent.path("acceptPost").asBoolean(),
+                            jsonPageComponent.path("template").asBoolean(), new ObjectMapper().treeToValue(jsonPageComponent.path("substitutionVariables"), Map.class)));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

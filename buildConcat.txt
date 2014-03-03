@@ -1,0 +1,8 @@
+
+lazy val akikuyuserver = project.in(file("."))
+    .aggregate(ergleapi, erglewebclient)
+    .dependsOn(ergleapi, erglewebclient)
+
+lazy val ergleapi = project
+
+lazy val erglewebclient = project
