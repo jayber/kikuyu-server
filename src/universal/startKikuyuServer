@@ -1,1 +1,1 @@
-sudo bin/kikuyu-server -Dhttp.port=80 -DconfigServerContext=localhost -DconfigFile=../kikuyuConfig/config.json 2> /dev/null &
+sudo bin/kikuyu-server "-Dhttp.port=80 -DconfigServerContext=localhost -DconfigFile=../kikuyuConfig/config.json -Xmx750m -Xms750m" 2> /dev/null &
