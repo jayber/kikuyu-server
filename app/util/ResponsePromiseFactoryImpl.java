@@ -77,7 +77,13 @@ public class ResponsePromiseFactoryImpl implements ResponsePromiseFactory {
             // another peculiarity: if data is formUrlEncoded then RequestBody.asText() doesn't get anything.
             // That's why have to get RequestBody.asFormUrlEncoded() and re-encode as text, since WSRequestHolder.post()
             // doesn't take a map.
-            final String postData = getPostData(request.body().asFormUrlEncoded());
+            String postData = null;
+            Map<String, String[]> body = request.body().asFormUrlEncoded();
+            if (!(body == null || body.isEmpty())) {
+                postData = getPostData(body);
+            } else {
+                postData = request.body().asText();
+            }
             componentPromise = urlHolder.post(postData);
         } else {
             componentPromise = urlHolder.get();
