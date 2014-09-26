@@ -4,6 +4,7 @@ import domain.Page;
 import domain.PageComponent;
 import play.libs.F;
 import play.libs.WS;
+import play.mvc.BodyParser;
 import play.mvc.Controller;
 import play.mvc.Http;
 import play.mvc.Result;
@@ -21,6 +22,7 @@ public class KikuyuController extends Controller {
     private ResponsePromiseFactory responsePromiseFactory;
 
     //todo: record each request that is mapped to a url and show in app number of requests in last month, so user can delete mappings that aren't being used
+    @BodyParser.Of(value = BodyParser.Raw.class, maxLength = 100 * 1000 * 1024)
     public Result siphon(String path) {
         final Page matchingPage = urlMappingsRetriever.getUrlMatcher().match(path);
 

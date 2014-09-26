@@ -8,6 +8,7 @@ import play.libs.F;
 import play.libs.WS;
 import play.mvc.Http;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -18,7 +19,7 @@ import java.util.regex.Pattern;
 public class ResponsePromiseFactoryImpl implements ResponsePromiseFactory {
 
     private static final String ORIGINATOR_URI_HEADER_NAME = "Originator-Uri";
-    private static final String[] HEADER_NAMES = new String[]{"Content-Type", "Cookie"};
+    private static final String[] HEADER_NAMES = new String[]{"Content-Type", "Cookie", "Accept"};
     private static final Pattern QUERY_STRING_BOUNDARY = Pattern.compile("\\?");
     private static final Pattern AMPERSAND_PATTERN = Pattern.compile("&");
     private static final Pattern EQUALS_PATTERN = Pattern.compile("=");
@@ -78,13 +79,11 @@ public class ResponsePromiseFactoryImpl implements ResponsePromiseFactory {
             // That's why have to get RequestBody.asFormUrlEncoded() and re-encode as text, since WSRequestHolder.post()
             // doesn't take a map.
             String postData = null;
-            Map<String, String[]> body = request.body().asFormUrlEncoded();
-            if (!(body == null || body.isEmpty())) {
-                postData = getPostData(body);
-            } else {
-                postData = request.body().asText();
-            }
-            componentPromise = urlHolder.post(postData);
+            Http.RequestBody body = request.body();
+            Http.RawBuffer raw = body.asRaw();
+            File file = raw.asFile();
+
+            componentPromise = urlHolder.post(file);
         } else {
             componentPromise = urlHolder.get();
         }
